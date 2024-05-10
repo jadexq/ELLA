@@ -16,7 +16,9 @@ Other than that, you're free to customize sites that you create with this templa
 
 [Browse our documentation][Just the Docs] to learn more about how to use this theme. 
 
-lala
+<div style="margin: 0 auto; text-align: center;"> 
+  <img src="{{ site.baseurl }}/images/test.png" width="200" />
+</div>
 
 To get started with creating a site, simply:
 
