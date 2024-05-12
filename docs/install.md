@@ -21,13 +21,14 @@ git clone git@github.com:jadexq/ELLA.git
 Go to the folder `ELLA` and install:
 ```
 pip install -r requirements.txt
-pip install .
+pip install -e .
 ```
 
-Now, you've got ELLA installed. Please get ELLA tested with the  minimum demo here.
+Now, you've got ELLA installed. You can get ELLA tested using the minimum demo here.
 
 ```
 pip install notebook
+pip install ipywidgets
 ```
 
 
