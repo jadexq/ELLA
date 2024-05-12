@@ -1,9 +1,9 @@
 torch==1.13.0
 rpy2==3.5.6
-numpy
-pandas
-matplotlib
-scipy
-scikit-learn
-tqdm
-ipdb
+numpy==1.26.4
+pandas==2.2.2
+matplotlib==3.8.4
+scipy==1.13.0
+scikit-learn==1.4.2
+tqdm==4.66.4
+ipdb==0.13.13
