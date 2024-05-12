@@ -24,5 +24,11 @@ pip install -r requirements.txt
 pip install .
 ```
 
-Now, you've got ELLA installed. Please test ELLA tested with the  minimum demo here.
+Now, you've got ELLA installed. Please get ELLA tested with the  minimum demo here.
+
+```
+pip install notebook
+```
+
+
 

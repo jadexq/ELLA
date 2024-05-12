@@ -7,3 +7,6 @@ _site/
 vendor/
 
 .DS_Store
+*.pyc
+__pycache__
+*.egg-info
