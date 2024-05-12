@@ -1,7 +1,7 @@
 ---
 title: ELLA's Inputs
 layout: default
-nav_order: 3
+nav_order: 4
 ---
 
 ELLA takes two pandas data frames as inputs. 
@@ -16,14 +16,15 @@ ELLA takes two pandas data frames as inputs.
 	
 	Here's how the data frame looks like:
 	<div style="margin: 0 auto; text-align: center;"> 
+
   	<img src="{{ site.baseurl }}/images/input_expr_df.png" width="500" />
-	</div>	
-	
-	And here's how the expression of one gene (marked as dots in red) and the cell center (marked as "cross" in red) look like:
-	<div style="margin: 0 auto; text-align: center;"> 
+  	</div>	
+  	
+  	And here's how the expression of one gene (marked as dots in red) and the cell center (marked as "cross" in red) look like:
+  	<div style="margin: 0 auto; text-align: center;"> 
   	<img src="{{ site.baseurl }}/images/input_expr.png" width="500" />
-	</div>	
-	
+  	</div>	
+
 2. Cell segmentation
 	A pands dataframe (`cell_seg`) with 3 columns:
 	- cell ID (`cell`)
@@ -31,14 +32,15 @@ ELLA takes two pandas data frames as inputs.
 	
 	Here's how the data frame looks like:
 	<div style="margin: 0 auto; text-align: center;"> 
+
   	<img src="{{ site.baseurl }}/images/input_cellseg_df.png" width="125" />
-	</div>	
-	
-	And here's how it actually looks like (in red solid line):
-	<div style="margin: 0 auto; text-align: center;"> 
+  	</div>	
+  	
+  	And here's how it actually looks like (in red solid line):
+  	<div style="margin: 0 auto; text-align: center;"> 
   	<img src="{{ site.baseurl }}/images/input_cellseg.png" width="500" />
-	</div>	
-	
+  	</div>	
+
 3. [Optional, for visualization purpose ONLY] Nucleus segmentation 
 
 	A pands dataframe (`nucleus_seg`) with 3 columns:
@@ -47,13 +49,14 @@ ELLA takes two pandas data frames as inputs.
 	
 	Here's how the data frame looks like:
 	<div style="margin: 0 auto; text-align: center;"> 
+
   	<img src="{{ site.baseurl }}/images/input_nucleusseg_df.png" width="125" />
-	</div>	
-	
-	And here's how it actually looks like (in darkgray dashed line):
-	<div style="margin: 0 auto; text-align: center;"> 
+  	</div>	
+  	
+  	And here's how it actually looks like (in darkgray dashed line):
+  	<div style="margin: 0 auto; text-align: center;"> 
   	<img src="{{ site.baseurl }}/images/input_nucleusseg.png" width="500" />
-	</div>	
+  	</div>	
 
 
 

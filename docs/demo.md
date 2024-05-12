@@ -1,10 +1,10 @@
 ---
-title: A Minimal Demo
+title: A Minimum Demo
 layout: default
-nav_order: 2
+nav_order: 3
 ---
 
-Here's a minimal demo to get started with ELLA :)
+Here's a minimum demo to get started with ELLA :)
 
 1. Install ELLA
 	
@@ -22,7 +22,6 @@ Here's a minimal demo to get started with ELLA :)
 	The data include:
 	1. la
   
-	
 3. ELLA Anlysis
 	1. Data Preprocessing
 	2. Model fitting
