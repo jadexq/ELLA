@@ -26,6 +26,8 @@ pip install -e .
 
 Now, you've got ELLA installed. You can get ELLA tested using the minimum demo here.
 
+[Optional] Install Jupyter Notebook if needed:
+
 ```
 pip install notebook
 pip install ipywidgets
