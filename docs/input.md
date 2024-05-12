@@ -8,7 +8,7 @@ ELLA takes two pandas data frames as inputs.
 
 1. Gene expression and cell center 
 
- A pandas data frame (`expr`) with a few columns:
+A pandas data frame (`expr`) with a few columns:
 
 - spatial gene expression including the coordinates (`x`, `y`) and the corresponding counts (`umi`) 
 - cell center (`centerX`, `centerY`)
