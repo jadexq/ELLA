@@ -24,3 +24,6 @@ Please let us know if you encounter any issues or have any suggestions or commen
 
 *Cite ELLA.*\
 Jade Wang, Xiang Zhou. ELLA: Modeling the Spatial Variation of Gene Expression within Cells in High-Resolution Spatial Transcriptomics, 2024.
+
+*Check out our lab website.*\
+[Zhou Lab](https://xiangzhou.github.io/)

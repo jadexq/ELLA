@@ -255,6 +255,8 @@ class ELLA:
         self.learning_rate_adjust = 1e7 # adaptive LR = maxll/learning_rate_adjust, default=1e7
         if adam_learning_rate_adjust is not None:
             self.learning_rate_adjust = adam_learning_rate_adjust
+        self.max_iter = 5000
+        self.min_iter = 100
         if max_iter is not None:
             self.max_iter = max_iter # max Adam iterations
         if min_iter is not None:
@@ -357,17 +359,17 @@ class ELLA:
                     data_dict = pickle.load(f)
 
         # cell type list
-        self.type_list = data_dict['type_list']
+        self.type_list = data_dict['types']
         # topN genes lists for each type
-        self.gene_list_dict = data_dict['gene_list_dict']
+        self.gene_list_dict = data_dict['genes']
         # cell list
-        self.cell_list_dict = data_dict['cell_list_dict']
+        self.cell_list_dict = data_dict['cells']
         # list of all cells
-        self.cell_list_all = data_dict['cell_list_all']
+        self.cell_list_all = data_dict['cells_all']
         # mask of cells
-        self.cell_mask_df = data_dict['cell_mask_df']
+        self.cell_mask_df = data_dict['cell_seg']
         # gene expression data
-        self.data_df = data_dict['data_df']
+        self.data_df = data_dict['expr']
         # ntanbin for each cell type -- set to default value, can specify later
         # self.ntanbin_dict = data_dict['ntanbin_dict']
         for t in self.type_list:
@@ -857,16 +859,16 @@ class ELLA:
             df_c['d_c_maxc'] = d_c_maxc
 
             # scale centered x_c and y_c - seq version
-            if self.dataset in self.tech_list_dict['seq']: # for seq data only
-                d_c_s = np.zeros(len(df_c))
-                x_c_s = np.zeros(len(df_c))
-                y_c_s = np.zeros(len(df_c))
-                d_c_s = df_c.d_c/(df_c.d_c_maxc+self.epsilon)
-                x_c_s = df_c.x_c*(d_c_s/(df_c.d_c+self.epsilon))
-                y_c_s = df_c.y_c*(d_c_s/(df_c.d_c+self.epsilon))
-                df_c['x_c_s'] = x_c_s
-                df_c['y_c_s'] = y_c_s
-                df_c['d_c_s'] = d_c_s
+            #if self.dataset in self.tech_list_dict['seq']: # for seq data only
+            d_c_s = np.zeros(len(df_c))
+            x_c_s = np.zeros(len(df_c))
+            y_c_s = np.zeros(len(df_c))
+            d_c_s = df_c.d_c/(df_c.d_c_maxc+self.epsilon)
+            x_c_s = df_c.x_c*(d_c_s/(df_c.d_c+self.epsilon))
+            y_c_s = df_c.y_c*(d_c_s/(df_c.d_c+self.epsilon))
+            df_c['x_c_s'] = x_c_s
+            df_c['y_c_s'] = y_c_s
+            df_c['d_c_s'] = d_c_s
 
             # append
             dict_registered[c] = df_c
