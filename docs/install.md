@@ -6,16 +6,23 @@ nav_order: 2
 
 Let's get ELLA installed :)
 
-1. Create a conda envirnment for ELLA
+Create a conda envirnment for ELLA:
 ```
 conda create -n ELLA python=3.10
+conda activate ELLA
+conda install conda-forge::r-base
 ```
 
-2. Install ELLA using pip
+Get ELLA from github:
 ```
-pip install -r ELLA_requirements.txt
+git clone git@github.com:jadexq/ELLA.git
 ```
-   
-	
-   
+
+Go to the folder `ELLA` and install:
+```
+pip install -r requirements.txt
+pip install .
+```
+
+Now, you've got ELLA installed. Please test ELLA tested with the  minimum demo here.
 
