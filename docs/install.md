@@ -1,5 +1,5 @@
 ---
-title: Intall ELLA
+title: Install ELLA
 layout: default
 nav_order: 2
 ---
