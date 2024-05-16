@@ -835,7 +835,7 @@ class ELLA:
             for q in range(4): # in each of the 4 quantrants
                 mask_df_c_q = mask_df_c_q_dict[str(q)]
                 mask_df_c_q['arctan_idx'] = (mask_df_c_q.arctan/delta_tanbin).astype(int) # arctan_idx from 0 to self.ntanbin_dict[t]-1
-                dismax_c_mat[:,q] = mask_df_c_q.groupby('arctan_idx').max()['d_c'].values # automatically sorted by arctan_idx from 0 to self.ntanbin_dict[t]-1
+                dismax_c_mat[mask_df_c_q.groupby('arctan_idx').max()['d_c'].index.to_numpy(),q] = mask_df_c_q.groupby('arctan_idx').max()['d_c'].values # automatically sorted by arctan_idx from 0 to self.ntanbin_dict[t]-1
 
             # for df_c, for arctan in each interval, find max dis using dismax_c
             df_c_q_dict = {}
