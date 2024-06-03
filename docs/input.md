@@ -44,7 +44,7 @@ ELLA takes two pandas data frames as inputs.
     <img src="{{ site.baseurl }}/images/input_nucleusseg.png" width="500" />
   </div>	
 
-How about tweek your own data into the format that ELLA takes and have a try!
+How about tweak your own data into the format that ELLA takes and have a try!
 
 
 
