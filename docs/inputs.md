@@ -1,7 +1,7 @@
 ---
 title: ELLA's Inputs
 layout: default
-nav_order: 4
+nav_order: 5
 ---
 
 ELLA takes two pandas data frames as inputs. 
