@@ -4,9 +4,8 @@ layout: default
 nav_order: 7
 has_children: true
 permalink: docs/reproduce
+has_toc: false
 ---
-
-<h1 style="outline: none;">Reproducibility</h1>
 
 Here's the codes for reproducing the real data application results in the ELLA manuscript.
 
