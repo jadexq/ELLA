@@ -1,6 +1,7 @@
 ---
 title: Page 2
-nav_order: 3
+parent: Reproducibility
+nav_order: 2
 ---
 
 # Page 2
