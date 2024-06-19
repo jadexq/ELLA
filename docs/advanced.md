@@ -8,7 +8,7 @@ ELLA has been tested on high-resolution spatial transcriptomics datasets across 
 
 The full list of customizable arguments and their default choices and functions are listed in the table below
 
-| Args | Type | Default | Fucntion |
+| Args | Type | Default | Function |
 |------|------|---------|----------|
 | `dataset` | str | 'Untitled' | Name of the dataset, help to distinguish multiple runs |
 | `beta_kernel_param_list` | list of lists | 22 lists | Shape parameters of the 22 beta kernel functions in NHPP model fitting |
