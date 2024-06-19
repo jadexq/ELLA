@@ -1,7 +1,8 @@
 ---
 title: Page 1
+layout: default
 parent: Reproducibility
-nav_order: 2
+nav_order: 1
 ---
 
 # Page 1

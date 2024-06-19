@@ -1,5 +1,6 @@
 ---
 title: Page 2
+layout: default
 parent: Reproducibility
 nav_order: 2
 ---
