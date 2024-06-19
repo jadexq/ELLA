@@ -78,3 +78,5 @@ ella_stereoseq.gene_list_dict[t] = gl_full[gene_idx_begin:gene_idx_end]
 print(f'run nhpp fit')
 ella_stereoseq.nhpp_fit(outfile=f'output/nhpp_fit_results_t{t}_g{gene_idx_begin}_{gene_idx_end}.pkl', ig_start=gene_idx_begin) 
 ```
+
+Other scripts used for mRNA characteristic analysis and for plotting are shared in the [github repo] (https://github.com/jadexq/ELLA/tree/main/scripts/stereoseq).

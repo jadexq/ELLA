@@ -39,3 +39,4 @@ print(ella_seqscope.type_list)
 ella_seqscope.nhpp_fit(outfile = f'output/nhpp_fit_results_{t}.pkl') 
 ```
 
+Other scripts used for mRNA characteristic analysis and for plotting are shared in the [github repo] (https://github.com/jadexq/ELLA/tree/main/scripts/seqscope).
