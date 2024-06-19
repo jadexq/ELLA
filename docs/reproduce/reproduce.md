@@ -7,7 +7,7 @@ permalink: docs/reproduce
 has_toc: false
 ---
 
-### Reproducibility
+## Reproducibility
 
 Here's the codes for reproducing the real data application results in the ELLA manuscript.
 

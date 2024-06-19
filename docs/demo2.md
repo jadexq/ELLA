@@ -4,7 +4,7 @@ layout: default
 nav_order: 4
 ---
 
-### A Complete Demo
+## A Complete Demo
 
 <div style="margin: 0 auto; text-align: center;"> 
 <img src="{{ site.baseurl }}/images/demo_ella_overview.png" width="700" />

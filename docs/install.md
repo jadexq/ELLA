@@ -4,7 +4,7 @@ layout: default
 nav_order: 2
 ---
 
-### Installation
+## Installation
 
 Let's get ELLA installed :)
 

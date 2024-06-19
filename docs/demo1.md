@@ -4,7 +4,7 @@ layout: default
 nav_order: 3
 ---
 
-### A Minimum Demo
+## A Minimum Demo
 
 Here's a minimum demo to get started with ELLA :)
 <div style="margin: 0 auto; text-align: center;"> 

@@ -4,7 +4,7 @@ layout: default
 nav_order: 6
 ---
 
-### Advanced Usage
+## Advanced Usage
 
 ELLA has been tested on high-resolution spatial transcriptomics datasets across various platforms and technologies. It comes with a set of default argument values that can be customized as needed. The usage of these customizable arguments is introduced in this page :)
 
