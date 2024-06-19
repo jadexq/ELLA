@@ -7,6 +7,8 @@ permalink: docs/reproduce
 has_toc: false
 ---
 
+### Reproducibility
+
 Here's the codes for reproducing the real data application results in the ELLA manuscript.
 
 - [Seq-Scope Mouse Liver Data]({{ site.baseurl }}/reproduce/rp_seqscope)

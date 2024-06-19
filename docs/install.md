@@ -4,6 +4,8 @@ layout: default
 nav_order: 2
 ---
 
+### Installation
+
 Let's get ELLA installed :)
 
 - Create a conda envirnment for ELLA:
