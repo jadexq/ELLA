@@ -1,5 +1,5 @@
 ---
-title: Seq-Scope Mouse Liver Data
+title: Seq-Scope
 layout: default
 parent: Reproducibility
 nav_order: 1

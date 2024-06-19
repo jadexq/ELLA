@@ -9,10 +9,10 @@ has_toc: false
 
 Here's the codes for reproducing the real data application results in the ELLA manuscript.
 
-- [Seq-Scope]({{ site.baseurl }}/reproduce/rp_seqscope)
-- [Stereo-seq]({{ site.baseurl }}/reproduce/rp_stereoseq)
-- [SeqFISH+]({{ site.baseurl }}/reproduce/rp_seqfish)
-- [MERFISH1]({{ site.baseurl }}/reproduce/rp_merfish1)
-- [MERFISH2]({{ site.baseurl }}/reproduce/rp_merfish2)
+- [Seq-Scope Mouse Liver Data]({{ site.baseurl }}/reproduce/rp_seqscope)
+- [Stereo-seq Mouse Embryo Data]({{ site.baseurl }}/reproduce/rp_stereoseq)
+- [SeqFISH+ Mouse Embryonic Fibroblast Data]({{ site.baseurl }}/reproduce/rp_seqfish)
+- [MERFISH Adult Mouse Brain Data]({{ site.baseurl }}/reproduce/rp_merfish1)
+- [MERFISH Human Osteosarcoma Data]({{ site.baseurl }}/reproduce/rp_merfish2)
 
   
