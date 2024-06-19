@@ -145,7 +145,7 @@ class ELLA:
     '''
     Class of EG analysis
     '''
-    def __init__(self, dataset: str, beta_kernel_param_list=None, adam_learning_rate_max=None, adam_learning_rate_min=None, adam_learning_rate_adjust=None, adam_delta_loss_max=None, adam_delta_loss_min=None, adam_delta_loss_adjust=None, adam_niter_loss_unchange=None, max_iter=None, min_iter=None, max_ntanbin=None, ri_clamp_min=None, ri_clamp_max=None, max_workers=None):
+    def __init__(self, dataset='Untitled', beta_kernel_param_list=None, adam_learning_rate_max=None, adam_learning_rate_min=None, adam_learning_rate_adjust=None, adam_delta_loss_max=None, adam_delta_loss_min=None, adam_delta_loss_adjust=None, adam_niter_loss_unchange=None, max_iter=None, min_iter=None, max_ntanbin=None, ri_clamp_min=None, ri_clamp_max=None, max_workers=None):
         '''
         Constructor
         Args:
