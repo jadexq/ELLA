@@ -18,10 +18,10 @@ ella_seqscope = ELLA(dataset='seqscope')
 # load data
 ella_seqscope.load_data(data_path='input/seqscope_data_dict.pkl')
 
-# resgistered cells
+# load resgistered cells
 ella_seqscope.load_registered_cells()
 
-# prepare data for the nhpp model fitting
+# load prepared data for the nhpp model fitting
 ella_seqscope.load_nhpp_prepared()
 
 # work on the chosen cell type
@@ -29,6 +29,6 @@ ella_seqscope.type_list = [t]
 print(ella_seqscope.type_list)
 
 # run nhpp fit
-ella_seqscope.nhpp_fit_parallel(outfile = f'output/nhpp_fit_results_{t}.pkl') 
+ella_seqscope.nhpp_fit(outfile = f'output/nhpp_fit_results_{t}.pkl') 
 ```
 
