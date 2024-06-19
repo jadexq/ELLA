@@ -5,6 +5,8 @@ parent: Reproducibility
 nav_order: 5
 ---
 
+### MERFISH Human Osteosarcoma Data Application
+
 Here's the main code that we used to apply ELLA to the MERFISH human osteosarcoma data.
 ```
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA

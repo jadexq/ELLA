@@ -5,6 +5,12 @@ parent: Reproducibility
 nav_order: 4
 ---
 
+### MERFISH Adult Mouse Brain Data Application
+
+<div style="margin: 0 auto; text-align: center;"> 
+<img src="{{ site.baseurl }}/images/rp_merfish1.png" width="500" />
+</div>
+
 Here's the main code that we used to apply ELLA to the MERFISH adult mouse brain data. We conducted the analysis across cell types and gene groups in parallel to save memory consumption and computation time.
 
 We first ran the cell registrition across cell types for every 100 cells in parallel and the results were saved under a `output` folder.
