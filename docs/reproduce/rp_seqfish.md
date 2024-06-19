@@ -1,5 +1,5 @@
 ---
-title: SeqFISH+ Mouse Embryonic Fibroblast Data
+title: SeqFISH+
 layout: default
 parent: Reproducibility
 nav_order: 3

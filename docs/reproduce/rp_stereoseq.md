@@ -1,5 +1,5 @@
 ---
-title: Stereo-seq Mouse Embryo Data
+title: Stereo-seq
 layout: default
 parent: Reproducibility
 nav_order: 2

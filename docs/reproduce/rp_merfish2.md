@@ -1,5 +1,5 @@
 ---
-title: MERFISH Human Osteosarcoma Data
+title: MERFISH2
 layout: default
 parent: Reproducibility
 nav_order: 5

@@ -1,5 +1,5 @@
 ---
-title: MERFISH Adult Mouse Brain Data
+title: MERFISH1
 layout: default
 parent: Reproducibility
 nav_order: 4
