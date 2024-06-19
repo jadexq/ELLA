@@ -8,7 +8,7 @@ nav_order: 1
   <img src="{{ site.baseurl }}/images/home_logo.png" width="200" />
 </div>
 
-Welcome to ELLA's page!
+**Welcome to ELLA's page!**
 
 *What's ELLA for?*\
 ELLA (Expression gradient-based mRNA LocaLization Analysis) is a statistical method that integrates high-resolution spatially resolved gene expression data with histology imaging data to identify the subcellular mRNA localization patterns in various spatially resolved transcriptomic techniques. 
