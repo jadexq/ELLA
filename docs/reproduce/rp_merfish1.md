@@ -7,7 +7,7 @@ nav_order: 4
 
 ### MERFISH Adult Mouse Brain Data Application
 
-<div style="margin: 0 auto; text-align: center;"> 
+<div style="margin: 0 auto; text-align: left;"> 
 <img src="{{ site.baseurl }}/images/rp_merfish1.png" width="500" />
 </div>
 

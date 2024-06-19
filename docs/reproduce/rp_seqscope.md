@@ -7,7 +7,7 @@ nav_order: 1
 
 ### Seq-Scope Mouse Liver Data Application
 
-<div style="margin: 0 auto; text-align: center;"> 
+<div style="margin: 0 auto; text-align: left;"> 
 <img src="{{ site.baseurl }}/images/rp_seqscope.png" width="500" />
 </div>
 

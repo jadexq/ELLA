@@ -7,7 +7,7 @@ nav_order: 2
 
 ### Stereo-seq Mouse Embryo Data Application
 
-<div style="margin: 0 auto; text-align: center;"> 
+<div style="margin: 0 auto; text-align: left;"> 
 <img src="{{ site.baseurl }}/images/rp_stereoseq.png" width="500" />
 </div>
 

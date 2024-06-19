@@ -7,7 +7,7 @@ nav_order: 3
 
 ### SeqFISH+ Mouse Embryonic Fibroblast Data Application
 
-<div style="margin: 0 auto; text-align: center;"> 
+<div style="margin: 0 auto; text-align: left;"> 
 <img src="{{ site.baseurl }}/images/rp_seqfish.png" width="500" />
 </div>
 
