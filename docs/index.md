@@ -23,6 +23,6 @@ ELLA is implemented in python with torch. Install ELLA library together with the
 Please let us know if you encounter any issues or have any suggestions or comments. ELLA appreciates your contributions!
 
 *Cite ELLA.*\
-Jade Wang, Xiang Zhou. ELLA: Modeling the Spatial Variation of Gene Expression within Cells in High-Resolution Spatial Transcriptomics, 2024.
+Jade Wang, Xiang Zhou. ELLA: Modeling the Subcellular  Spatial Variation of Gene Expression within Cells in High-Resolution Spatial Transcriptomics, 2024.
 
 Check out our [Zhou Lab](https://xiangzhou.github.io/) website for more softwares :) 
