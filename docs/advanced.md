@@ -12,7 +12,7 @@ The full list of customizable arguments and their default choices and functions 
 
 | Args | Type | Default | Function |
 |------|------|---------|----------|
-| `dataset` | str | 'Untitled' | Name of the dataset, help to distinguish multiple runs |
+| `dataset` | str | 'untitled' | Name of the dataset, help to distinguish multiple runs |
 | `beta_kernel_param_list` | list of lists | 22 lists | Shape parameters of the 22 beta kernel functions in NHPP model fitting |
 | `adam_learning_rate_max` | float | 1e-2 | Max initial learning rate of Adam |
 | `adam_learning_rate_min` | float | 1e-3 | Min initial learning rate of Adam |
