@@ -17,7 +17,7 @@ Check out the [tutorial pages](https://jadexq.github.io/ELLA/) for detailed docu
 ├── requirements.txt %
 ├── ELLA % ELLA source code
 │   └── ELLA.py
-├── docs % srouce code of the tutorial website
+├── docs % source code of the tutorial website
 │   ├── ...
 ├── processed_data % preprocessed data for each dataset (will be shared soon)
 │   ├── seqscope
