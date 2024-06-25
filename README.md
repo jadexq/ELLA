@@ -11,7 +11,7 @@ pip install -e .
 ```
 Please check out [installation](https://jadexq.github.io/ELLA/install.html) for details.
 
-#### This repo is orgnized as follows
+### This repo is orgnized as follows
 ```
 ├── setup.py %
 ├── requirements.txt %
