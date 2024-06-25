@@ -6,7 +6,22 @@ nav_order: 3
 
 ## A Minimum Demo
 
-Here's a minimum demo to get started with ELLA :)
+**Here's a minimum demo to get started with ELLA :)**
+
+The scripts and data that will be used in this demo can be found [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/mini_demo).
+They  should be orgnized as:
+mini_demo/
+├── input
+│   └── mini_demo_data.pkl
+├── output
+│   ├── df_nhpp_prepared.pkl
+│   ├── df_registered.pkl
+│   ├── lam_est.pkl
+│   ├── nhpp_fit_results.pkl
+│   └── pv_est.pkl
+└── mini_demo.ipynb
+
+
 1. ### Install ELLA <br>
 Install ELLA follows the steps [here](http://127.0.0.1:4000/docs/install.html) if you haven't done so yet.
 2. ### Download Data <br>
