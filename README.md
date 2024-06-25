@@ -10,3 +10,42 @@ Details are introduced in the [installation](https://jadexq.github.io/ELLA/insta
 
 ## Quick Start
 Check out the [tutorial pages](https://jadexq.github.io/ELLA/) for detailed documentation and examples to get started with ELLA.
+
+## This repo is orgnized as follows
+```
+├── setup.py %
+├── requirements.txt %
+├── ELLA % ELLA source code
+│   └── ELLA.py
+├── docs % srouce code of the tutorial website
+│   ├── ...
+├── processed_data % preprocessed data for each dataset (will be shared soon)
+│   ├── seqscope
+│   │   ├── seqscope_data_dict.pkl % the input that ELLA takes
+│   │   └── df_registered_saved.pkl % registered expression data
+│   ├── stereoseq
+│   │   ├── stereoseq_data_dict.pkl
+│   │   └── df_registered_saved.pkl
+│   ├── seqfish
+│   │   ├── seqfish_data_dict.pkl
+│   │   └── df_registered_saved.pkl
+│   └── merfish
+│       ├── merfish_mouse_brain_data_dict.pkl
+│       └── df_registered_saved.pkl
+├── scripts
+│   ├── demo % code and data for the minimum and complete demos
+│   │   ├── mini_demo
+│   │   └── complete_demo
+│   ├── analysis % mRNA characteristic analysis code for each dataset
+│   |   ├── merfish1
+│   |   ├── seqfish
+│   |   ├── seqscope
+│   |   └── stereoseq
+│   └── preprocessing % data preprocessing code for each data set
+│       ├── merfish1
+│       ├── seqfish
+│       ├── seqscope
+│       └── stereoseq
+└── README.md
+
+```
