@@ -11,7 +11,7 @@ nav_order: 4
 The scripts and data that will be used in this demo can be found [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/complete_demo).
 They  should be orgnized as:
 ```
-mini_demo/
+complete_demo/
 ├── input
 │   └── complete_demo_data.pkl
 ├── output
