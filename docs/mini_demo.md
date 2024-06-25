@@ -22,14 +22,12 @@ Data pre-processing
 # import ELLA
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
 ella_demo = ELLA(
-    dataset='demo', 
-    adam_learning_rate_max=5e-3,
-    adam_learning_rate_min=5e-3, 
-    adam_delta_loss_max=1e-3,
-    adam_delta_loss_min=1e-5
+    dataset='demo1', 
+    adam_learning_rate_min=1e-2, 
+    max_iter=1000
 )
 # load data
-ella_demo.load_data(data_path='input/demo_data.pkl')
+ella_demo.load_data(data_path='input/mini_demo_data.pkl')
 # register cells
 ella_demo.register_cells()
 # prepare data for model fitting
@@ -42,10 +40,10 @@ ella_demo.nhpp_fit()
 ```
 Testing and estimation
 ```python
-# likelihood ratio test
-ella_demo.compute_pv()
 # expression intensity estimation
 ella_demo.weighted_density_est()
+# likelihood ratio test
+ella_demo.compute_pv()
 ```
 4. ### Check out ELLA's results <br>
 ```python
@@ -186,7 +184,3 @@ for i, c in enumerate(cells):
 <div style="margin: 0 auto; text-align: center;"> 
   <img src="{{ site.baseurl }}/images/demo_cells_genes.png" width="600" />
 </div>	
-
-
-
-
