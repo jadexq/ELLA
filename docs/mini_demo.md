@@ -10,7 +10,7 @@ nav_order: 3
 
 The scripts and data that will be used in this demo can be found [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/mini_demo).
 They  should be orgnized as:
-```lua
+```
 mini_demo/
 ├── input
 │   └── mini_demo_data.pkl
