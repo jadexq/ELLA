@@ -6,6 +6,7 @@ nav_order: 4
 
 ## A Complete Demo
 
+
 **Here's a demo introducing a relatively complete ELLA analysis pipline.** You probabaly have alreay installed ELLA, so let get start wtih downloading the input data for this demo from here. The data is a subset of the processed seqFISH+ embryonic fibroblast dataset. It is a .pkl file that stores a dictionnary of three data frames corresponding to the gene expression, cell segmentation, and nucleus segmentation (optional) with 20 cells and 50 genes. 
 
 The scripts and data that will be used in this demo can be found [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/complete_demo).
