@@ -28,7 +28,7 @@ complete_demo/
 ```python
 # import ELLA
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
-ella_demo = ELLA(dataset='demo')
+ella_demo = ELLA(dataset='demo2')
 # load data
 ella_demo.load_data(data_path='input/complete_demo_data.pkl')
 ```
