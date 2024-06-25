@@ -7,10 +7,6 @@ nav_order: 3
 ## A Minimum Demo
 
 Here's a minimum demo to get started with ELLA :)
-<div style="margin: 0 auto; text-align: center;"> 
-<img src="{{ site.baseurl }}/images/demo_ella_overview.png" width="700" />
-</div>
-
 1. ### Install ELLA <br>
 Install ELLA follows the steps [here](http://127.0.0.1:4000/docs/install.html) if you haven't done so yet.
 2. ### Download Data <br>
