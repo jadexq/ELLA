@@ -19,19 +19,6 @@ Please check out [installation](https://jadexq.github.io/ELLA/install.html) for 
 │   └── ELLA.py
 ├── docs % source code of the tutorial website
 │   ├── ...
-├── processed_data % preprocessed data for each dataset (will be shared soon)
-│   ├── seqscope
-│   │   ├── seqscope_data_dict.pkl % the input that ELLA takes
-│   │   └── df_registered_saved.pkl % registered expression data
-│   ├── stereoseq
-│   │   ├── stereoseq_data_dict.pkl
-│   │   └── df_registered_saved.pkl
-│   ├── seqfish
-│   │   ├── seqfish_data_dict.pkl
-│   │   └── df_registered_saved.pkl
-│   └── merfish
-│       ├── merfish_mouse_brain_data_dict.pkl
-│       └── df_registered_saved.pkl
 ├── scripts
 │   ├── demo % code and data for the minimum and complete demos
 │   │   ├── mini_demo
@@ -48,4 +35,15 @@ Please check out [installation](https://jadexq.github.io/ELLA/install.html) for 
 │       └── stereoseq
 └── README.md
 
+```
+### Processed data are shared via xx
+```
+seqscope_data_dict.pkl % the input that ELLA takes in seqscope
+seqscope_df_registered_saved.pkl % registered expression data in seqscope
+stereoseq_data_dict.pkl % the input that ELLA takes in stereoseq
+stereoseq_df_registered_saved.pkl % registered expression data in stereoseq
+seqfish_data_dict.pkl % the input that ELLA takes in seqfish
+seqfish_df_registered_saved.pkl % registered expression data in seqfish
+merfish_mouse_brai_data_dict.pkl % the input that ELLA takes in merfish_mouse_brain
+merfish_mouse_brai_df_registered_saved.pkl % registered expression data in merfish_mouse_brain 
 ```
