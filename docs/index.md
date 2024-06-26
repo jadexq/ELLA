@@ -20,7 +20,7 @@ ELLA models spatial count data through a nonhomogeneous Poisson process model an
 </div>
 
 *How to try it out?*\
-ELLA is implemented in python with torch. Install ELLA library together with the dependencies follow the steps shown [here](https://jadexq.github.io/ELLA/install.html). After intalling ELLA, this [minimum demo](https://jadexq.github.io/ELLA/mini_demo.html) can be a good start. To take a step further, the code that we used for the real data anlayses and plots in the ELLA manuscript are also shared via this website.
+ELLA is implemented in python with torch. Install ELLA library together with the dependencies follow the steps shown [here]({{ site.baseurl }}/install.html). After intalling ELLA, this [minimum demo]({{ site.baseurl }}/mini_demo.html) can be a good start. To take a step further, the code that we used for the real data anlayses and plots in the ELLA manuscript are also shared via this website.
 
 *Report issues.*\
 Please let us know if you encounter any issues or have any suggestions or comments. ELLA appreciates your contributions!

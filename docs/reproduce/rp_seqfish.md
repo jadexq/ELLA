@@ -29,4 +29,4 @@ ella_seqfish.load_nhpp_prepared()
 ella_seqfish.nhpp_fit()
 ```
 
-Other scripts used for mRNA characteristic analysis and for plotting are shared in the [github repo](https://github.com/jadexq/ELLA/tree/main/scripts/seqfish).
+Other scripts used for mRNA characteristic analysis and for plotting are shared in the [github repo](https://github.com/jadexq/ELLA/tree/main/scripts/analysis/seqfish).

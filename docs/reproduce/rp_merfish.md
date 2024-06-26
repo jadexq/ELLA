@@ -1,5 +1,5 @@
 ---
-title: MERFISH1
+title: MERFISH
 layout: default
 parent: Reproducibility
 nav_order: 4
@@ -22,22 +22,22 @@ j = sys.argv[1]
 print(f'idx={j}')
 
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
-ella_merfish1 = ELLA(dataset='merfish1', max_ntanbin=15)
+ella_merfish = ELLA(dataset='merfish', max_ntanbin=15)
 
 # load data
-ella_merfish1.load_data(data_path=f'input/split_data_{j}.pkl')
+ella_merfish.load_data(data_path=f'input/split_data_{j}.pkl')
 
 # register cells
-ella_merfish1.register_cells(outfile=f'output/df_registered_{j}.pkl')
+ella_merfish.register_cells(outfile=f'output/df_registered_{j}.pkl')
 ```
 
 We then further processed the registered data for the NHPP model fitting and the results were automatically saved under the `output` folder.
 ```
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
-ella_merfish1 = ELLA(dataset='merfish1', max_ntanbin=15)
+ella_merfish = ELLA(dataset='merfish', max_ntanbin=15)
 
 # load data
-ella_merfish1.load_data(data_path='input/merfish_mouse_brain_data_dict.pkl')
+ella_merfish.load_data(data_path='input/merfish_mouse_brain_data_dict.pkl')
 
 # load registered cells
 import pickle
@@ -70,31 +70,31 @@ gene_idx_end = int(sys.argv[3])
 print(f'cell_type {cell_type} gene_idx_begin {gene_idx_begin} gene_idx_end {gene_idx_end}')
 
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
-ella_merfish1 = ELLA(dataset='merfish1', max_ntanbin=15)
+ella_merfish = ELLA(dataset='merfish', max_ntanbin=15)
 
 # load data
 print(f'load data')
-ella_merfish1.load_data(data_path='input/merfish_mouse_brain_data_dict.pkl')
+ella_merfish.load_data(data_path='input/merfish_mouse_brain_data_dict.pkl')
 
 # load registered cells
-print(f'load registered cells') ella_merfish1.load_registered_cells(registered_path='output/df_registered_saved.pkl')
+print(f'load registered cells') ella_merfish.load_registered_cells(registered_path='output/df_registered_saved.pkl')
 
 # load prepared data
 print(f'load prepared data for NHPP fit')
-ella_merfish1.load_nhpp_prepared(data_path='output/df_nhpp_prepared_saved.pkl')
+ella_merfish.load_nhpp_prepared(data_path='output/df_nhpp_prepared_saved.pkl')
 
 # <<<<< the cell type of focus
 t = cell_type
-ella_merfish1.type_list = [t]
-print(ella_merfish1.type_list)
+ella_merfish.type_list = [t]
+print(ella_merfish.type_list)
 
 # <<<<< the subset of genes of focus
-gl_full = ella_merfish1.gene_list_dict[t]
-ella_merfish1.gene_list_dict[t] = gl_full[gene_idx_begin:gene_idx_end]
+gl_full = ella_merfish.gene_list_dict[t]
+ella_merfish.gene_list_dict[t] = gl_full[gene_idx_begin:gene_idx_end]
 
 # run nhpp fit
 print(f'run nhpp fit')
-ella_merfish1.nhpp_fit(outfile=f'output/nhpp_fit_results_t{t}_g{gene_idx_begin}_{gene_idx_end}.pkl', ig_start=gene_idx_begin)
+ella_merfish.nhpp_fit(outfile=f'output/nhpp_fit_results_t{t}_g{gene_idx_begin}_{gene_idx_end}.pkl', ig_start=gene_idx_begin)
 ```
 
-Other scripts used for mRNA characteristic analysis and for plotting are shared in the [github repo](https://github.com/jadexq/ELLA/tree/main/scripts/merfish1).
+Other scripts used for mRNA characteristic analysis and for plotting are shared in the [github repo](https://github.com/jadexq/ELLA/tree/main/scripts/analysis/merfish).

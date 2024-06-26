@@ -25,10 +25,10 @@ mini_demo/
 ```
 
 1. ### Install ELLA <br>
-Install ELLA follows the steps [here](https://jadexq.github.io/ELLA/install.html) if you haven't done so yet.
+Install ELLA follows the steps [here]({{ site.baseurl }}/install.html) if you haven't done so yet.
 2. ### Download Data <br>
-Please download the data for this demo from [here](https://github.com/jadexq/ELLA/blob/main/data/demo_data.pkl) as the inputs for ELLA. <br>
-The data is a .pkl file that stores a dictionnary of three data frames corresponding to the gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are shown [here](https://jadexq.github.io/ELLA/install.html).
+Please download the data for this demo from [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/mini_demo/input) as the inputs for ELLA. <br>
+The data is a .pkl file that stores a dictionnary of three data frames corresponding to the gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are shown [here]{{ site.baseurl }}/inputs.html).
 3. ### ELLA Anlysis <br>
 Data pre-processing
 ```python
