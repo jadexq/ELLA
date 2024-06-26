@@ -37,13 +37,19 @@ Please check out [installation](https://jadexq.github.io/ELLA/install.html) for 
 
 ```
 ### Processed data are shared via xx
-```
-seqscope_data_dict.pkl % the input that ELLA takes in seqscope
-seqscope_df_registered_saved.pkl % registered expression data in seqscope
-stereoseq_data_dict.pkl % the input that ELLA takes in stereoseq
-stereoseq_df_registered_saved.pkl % registered expression data in stereoseq
-seqfish_data_dict.pkl % the input that ELLA takes in seqfish
-seqfish_df_registered_saved.pkl % registered expression data in seqfish
-merfish_mouse_brai_data_dict.pkl % the input that ELLA takes in merfish_mouse_brain
-merfish_mouse_brai_df_registered_saved.pkl % registered expression data in merfish_mouse_brain 
-```
+Seq-Scope
+- the input that ELLA takes: seqscope_data_dict.pkl
+- the registered expression data: seqscope_df_registered_saved.pkl
+  
+Stereo-seq
+- the input that ELLA takes: stereoseq_data_dict.pkl
+- the registered expression data: stereoseq_df_registered_saved.pkl
+  
+SeqFISH+
+- the input that ELLA takes: seqfish_data_dict.pkl
+- the registered expression data: seqfish_df_registered_saved.pkl
+
+Merfish mouse brain
+- the input that ELLA takes: merfish_mouse_brain_data_dict.pkl
+- the registered expression data: merfish_mouse_brain_df_registered_saved.pkl
+
