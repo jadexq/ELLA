@@ -29,7 +29,7 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-Congrats, you've got ELLA installed! You can get ELLA tested using the minimum demo [here](https://jadexq.github.io/ELLA/demo.html).
+Congrats, you've got ELLA installed! You can get ELLA tested using the minimum demo [here](https://jadexq.github.io/ELLA/mini_demo.html).
 
 [Optional] Install Jupyter Notebook if needed:
 
