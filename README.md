@@ -13,6 +13,7 @@ Please check out [installation](https://jadexq.github.io/ELLA/install.html) for 
 
 ## Repo Structure
 ```
+./ELLA/
 ├── setup.py % project config
 ├── requirements.txt % dependencies
 ├── ELLA % ELLA source code
