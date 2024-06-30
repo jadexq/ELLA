@@ -6,9 +6,9 @@ nav_order: 5
 
 ## Inputs
 
-ELLA takes two pandas data frames as inputs. 
+ELLA mainly takes two pandas data frames as inputs. 
 
-1. **Gene expression and cell center** <br>
+- **Gene expression and cell center** <br>
     A pandas data frame (`expr`) with a few columns:
   - spatial gene expression including the coordinates (`x`, `y`) and the corresponding counts (`umi`) 
   - cell center (`centerX`, `centerY`)
@@ -21,10 +21,10 @@ ELLA takes two pandas data frames as inputs.
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_expr.png" width="500" />
   </div>
-2. **Cell segmentation** <br>
+-  **Cell segmentation** <br>
     A pands dataframe (`cell_seg`) with 3 columns:
-  - cell ID (`cell`)
-  - the coordinates of points that characterize the cell segmentation boundary or the coordinates of points that characterize the cell segmentation mask (`cell_seg`). <br>
+	- cell ID (`cell`)
+	- the coordinates of points that characterize the cell segmentation boundary or the coordinates of points that characterize the cell segmentation mask (`cell_seg`). <br>
     Here's how the data frame looks like:
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_cellseg_df.png" width="125" />
@@ -33,7 +33,7 @@ ELLA takes two pandas data frames as inputs.
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_cellseg.png" width="500" />
   </div>	
-3. [Optional, for visualization purpose ONLY] Nucleus segmentation <br>
+- [Optional, for visualization purpose ONLY] Nucleus segmentation <br>
     A pands dataframe (`nucleus_seg`) with 3 columns:
   - cell ID (`cell`)
   - the coordinates of points that characterize the nucleus segmentation boundary or the coordinates of points that characterize the nucleus segmentation mask (`nucleus_seg`). <br>
@@ -45,6 +45,12 @@ ELLA takes two pandas data frames as inputs.
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_nucleusseg.png" width="500" />
   </div>	
+  
+- Other inputs
+	- `types` a list corresponding to all cell types.
+	- `cells` a dictionary of lists corresponding to list of cells in each cell type.
+	- `cells_all` a list of all cells across cell types.
+	- `genes` a dictionary of lists corresponding to list of genes in each cell type.
 
 How about tweak your own data into the format that ELLA takes and have a try!
 

@@ -6,13 +6,17 @@ nav_order: 3
 
 ## A Minimum Demo
 
+<br>
 **Here's a minimum demo to get started with ELLA :)**
+<br>
+<br>
 
-The scripts and data that will be used in this demo can be found [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/mini_demo).
-They  should be orgnized as:
+### Install ELLA <br>
+Install ELLA follows the steps [here]({{ site.baseurl }}/install.html) if you haven't done so yet.
 
+The script and data that will be used in this demo should have already been downloaded (while cloning the ELLA repo). You should be able to find these at your local ELLA folder:
 ```
-mini_demo/
+ELLA/scripts/demo/mini_demo/
 ├── input
 │   └── mini_demo_data.pkl
 ├── output
@@ -23,12 +27,10 @@ mini_demo/
 │   └── pv_est.pkl
 └── mini_demo.ipynb
 ```
+The input data (`input/mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are shown [here]({{ site.baseurl }}/inputs.html).
 
-1. ### Install ELLA <br>
-Install ELLA follows the steps [here]({{ site.baseurl }}/install.html) if you haven't done so yet.
-2. ### Download Data <br>
-Please download the data for this demo from [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/mini_demo/input) as the inputs for ELLA. <br>
-The data is a .pkl file that stores a dictionnary of three data frames corresponding to the gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are shown [here]{{ site.baseurl }}/inputs.html).
+The script of this demo is `mini_demo.ipynb`, you should be able to run it by yourself :) You would expected the following steps and outputs:
+
 3. ### ELLA Anlysis <br>
 Data pre-processing
 ```python

@@ -6,13 +6,14 @@ nav_order: 4
 
 ## A Complete Demo
 
+<br>
+**Here's a demo introducing a relatively complete ELLA analysis pipline.** 
+<br>
+<br>
 
-**Here's a demo introducing a relatively complete ELLA analysis pipline.** You probabaly have alreay installed ELLA, so let get start wtih downloading the input data for this demo from here. The data is a subset of the processed seqFISH+ embryonic fibroblast dataset. It is a .pkl file that stores a dictionnary of three data frames corresponding to the gene expression, cell segmentation, and nucleus segmentation (optional) with 20 cells and 50 genes. 
-
-The scripts and data that will be used in this demo can be found [here](https://github.com/jadexq/ELLA/tree/main/scripts/demo/complete_demo).
-They  should be orgnized as:
+The script and data that will be used in this demo should have already been downloaded (while cloning the ELLA repo). You should be able to find these at your local ELLA folder:
 ```
-complete_demo/
+ELLA/scripts/demo/complete_demo/
 ├── input
 │   └── complete_demo_data.pkl
 ├── output
@@ -24,7 +25,12 @@ complete_demo/
 └── complete_demo.ipynb
 ```
 
-1. Let's begin with initiating ELLA:
+The data is a subset of the processed seqFISH+ embryonic fibroblast dataset. 
+The input data (`input/complete_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional) with 20 cells and 50 genes. 
+
+The script of this demo is `complete_demo.ipynb`, you should be able to run it by yourself :) You would expected the following steps and outputs:
+
+1. Initiating ELLA:
 ```python
 # import ELLA
 from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA

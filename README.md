@@ -5,7 +5,7 @@ Check out the [tutorial pages](https://jadexq.github.io/ELLA/) for demos and doc
 
 ## Quick Installation
 ```
-git clone git@github.com:jadexq/ELLA.git
+git clone https://github.com/jadexq/ELLA.git
 pip install -r requirements.txt
 pip install -e .
 ```
@@ -42,10 +42,12 @@ Seq-Scope
 - the input that ELLA takes: [seqscope_data_dict.pkl](https://github.com/jadexq/ELLA/releases/download/v0.0.1/seqscope_data_dict.pkl)
 - the registered expression data: [seqscope_df_registered_saved.pkl](https://github.com/jadexq/ELLA/releases/download/v0.0.1/seqscope_df_registered_saved.pkl)
   
+
 Stereo-seq
 - the input that ELLA takes: [stereoseq_data_dict.pkl](https://github.com/jadexq/ELLA/releases/download/v0.0.1/stereoseq_data_dict.pkl)
 - the registered expression data: [stereoseq_df_registered_saved.pkl](https://github.com/jadexq/ELLA/releases/download/v0.0.1/stereoseq_df_registered_saved.pkl)
   
+
 SeqFISH+
 - the input that ELLA takes: [seqfish_data_dict.pkl](https://github.com/jadexq/ELLA/releases/download/v0.0.1/seqfish_data_dict.pkl)
 - the registered expression data: [seqfish_df_registered_saved.pkl](https://github.com/jadexq/ELLA/releases/download/v0.0.1/seqfish_df_registered_saved.pkl)
