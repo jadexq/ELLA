@@ -17,14 +17,14 @@ ELLA mainly takes two pandas data frames as inputs.
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_expr_df.png" width="500" />
   </div>
-  And here's how the expression of one gene (marked as dots in red) and the cell center (marked as "cross" in red) look like:
+  And here's how the expression of one gene (marked as dots in red) and the cell center (marked as "cross" in red) looks like:
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_expr.png" width="500" />
   </div>
 -  **Cell segmentation** <br>
     A pands dataframe (`cell_seg`) with 3 columns:
 	- cell ID (`cell`)
-	- the coordinates of points that characterize the cell segmentation boundary or the coordinates of points that characterize the cell segmentation mask (`cell_seg`). <br>
+	- the coordinates of points that characterize the cell segmentation boundary (`cell_seg`). <br>
     Here's how the data frame looks like:
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_cellseg_df.png" width="125" />
@@ -36,7 +36,7 @@ ELLA mainly takes two pandas data frames as inputs.
 - [Optional, for visualization purpose ONLY] Nucleus segmentation <br>
     A pands dataframe (`nucleus_seg`) with 3 columns:
   - cell ID (`cell`)
-  - the coordinates of points that characterize the nucleus segmentation boundary or the coordinates of points that characterize the nucleus segmentation mask (`nucleus_seg`). <br>
+  - the coordinates of points that characterize the nucleus segmentation boundary (`nucleus_seg`). <br>
     Here's how the data frame looks like:
   <div style="margin: 0 auto; text-align: center;"> 
     <img src="{{ site.baseurl }}/images/input_nucleusseg_df.png" width="125" />
