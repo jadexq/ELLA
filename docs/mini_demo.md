@@ -29,7 +29,7 @@ ELLA/scripts/demo/mini_demo/
 ```
 The input data (`input/mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are shown [here]({{ site.baseurl }}/inputs.html).
 
-The script of this demo is `mini_demo.ipynb`, you should be able to run it by yourself :) You would expected the following steps and outputs:
+The script of this demo is `mini_demo.ipynb`, you should be able to run it locally by yourself :) You would expected the following steps and outputs:
 
 3. ### ELLA Anlysis <br>
 Data pre-processing

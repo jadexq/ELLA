@@ -47,7 +47,7 @@ ella_demo.nhpp_prepare()
 # model fitting
 ella_demo.nhpp_fit()
 ```
-As this could take a couple of minutes, to save time,  let's instead download the saved results from here and put them into the `output` folder. ELLA can easily load saved results with:
+As this could take a couple of minutes, to save time,  let's instead used the saved results in the `output` folder. ELLA can easily load saved results with:
 ```python
 # load registered cells
 ella_demo.load_registered_cells(path='output/df_registered_saved.pkl')
