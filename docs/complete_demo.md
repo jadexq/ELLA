@@ -28,7 +28,7 @@ ELLA/scripts/demo/complete_demo/
 The data is a subset of the processed seqFISH+ embryonic fibroblast dataset. 
 The input data (`input/complete_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional) with 20 cells and 50 genes. 
 
-The script of this demo is `complete_demo.ipynb`, you should be able to run it by yourself :) You would expected the following steps and outputs:
+The script of this demo is `complete_demo.ipynb`, you should be able to run it locally by yourself, expecting the following steps and outputs:
 
 1. Initiating ELLA:
 ```python
@@ -38,7 +38,7 @@ ella_demo = ELLA(dataset='demo2')
 # load data
 ella_demo.load_data(data_path='input/complete_demo_data.pkl')
 ```
-2. Let's run the data pre-processing and model fitting steps:
+2. Run the data pre-processing and model fitting steps:
 ```python
 # register cells
 ella_demo.register_cells()
@@ -47,7 +47,7 @@ ella_demo.nhpp_prepare()
 # model fitting
 ella_demo.nhpp_fit()
 ```
-As this could take a couple of minutes, to save time,  let's instead used the saved results in the `output` folder. ELLA can easily load saved results with:
+As this could take a couple of minutes, to save time,  let's **instead** use the saved results in the `output` folder. ELLA can easily load saved results with:
 ```python
 # load registered cells
 ella_demo.load_registered_cells(path='output/df_registered_saved.pkl')
@@ -81,13 +81,14 @@ Pattern 2: 14 genes
 Pattern 3: 9 genes
 Pattern 4: 10 genes
 Pattern 5: 9 genes
+```
 
 Plots: numbers and proportions of significant genes, estimated expression patterns, and estimated pattern scores
-```
+
 <div style="margin: 0 auto; text-align: center;"> 
 <img src="{{ site.baseurl }}/images/demo2_est.png" width="500" />
 </div>
-We can overlay genes in the same cluster in cells to have a more intuitive sense of the patterns.
+We can overlay all genes in the same cluster in cells to have a more intuitive sense of the patterns.
 <div style="margin: 0 auto; text-align: center;"> 
 <img src="{{ site.baseurl }}/images/demo2_cells.png" width="600" />
 </div>

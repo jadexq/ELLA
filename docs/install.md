@@ -38,9 +38,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-Congrats, you've got ELLA installed! You can get ELLA tested using the minimum demo [here]({{ site.baseurl }}/mini_demo.html).
+Congrats, you've got ELLA installed! You can get ELLA tested using [A Minimum Demo]({{ site.baseurl }}/mini_demo.html).
 
-Install Jupyter Notebook for running the demo scripts:
+You may also install Jupyter Notebook for running the demo scripts:
 
 ```
 pip install notebook
