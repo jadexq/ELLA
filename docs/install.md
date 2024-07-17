@@ -47,5 +47,6 @@ pip install notebook
 pip install ipywidgets
 ```
 
+ELLA has been tested on operating systems: macOS Ventura 13.0, macOS Monterey 12.4, Ubuntu 20.04.6 LTS, Windows 10.
 
 
