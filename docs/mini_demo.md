@@ -29,7 +29,7 @@ ELLA/scripts/demo/mini_demo/
 ```
 The input data (`input/mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/inputs.html).
 
-The script of this demo is `mini_demo.ipynb`, you should be able to run it locally by yourself and you would expected the following steps and outputs:
+The script of this demo is `mini_demo.ipynb`, you should be able to run it locally by yourself (run time around 2min) and you would expected the following steps and outputs:
 
 3. ### ELLA Anlysis <br>
 Data pre-processing
@@ -120,7 +120,7 @@ for i, g in enumerate(genes):
 <div style="margin: 0 auto; text-align: center;"> 
   <img src="{{ site.baseurl }}/images/demo_lam_est.png" width="600" />
 </div>	
-Here *Slc38a2* looks like a nuclear localized genes as its estimated expression intensity is high when the relative position is near zero (corresponding to nuclear center); *Col1a1* could be a nuclear edge localized gene as its expression intensity peaks around relative position 0.3; *Actn1* should be a cytoplasmic localized gene as its expression intensity peak around 0.6; and *Cyb5r3* should be a cell membrance localized gene as its expression intesntiy peaks near 1 (corresponding to the cell membrane). 
+Here *Slc38a2* looks like a nuclear localized genes as its estimated expression intensity is high when the relative position is near zero (corresponding to nuclear center); *Col1a1* could be a nuclear edge localized gene as its expression intensity peaks around relative position 0.3; *Actn1* should be a cytoplasmic localized gene as its expression intensity peak around 0.6; and *Cyb5r3* should be a cell membrane localized gene as its expression intensity peaks near 1 (corresponding to the cell membrane). 
 
 More to plot:
 We can further plot the cells and genes to have a more intuitive sense of the localization patterns.

@@ -7,7 +7,7 @@ nav_order: 4
 ## A Complete Demo
 
 <br>
-**Here's a demo introducing a relatively complete ELLA analysis pipline.** 
+**Here's a demo introducing a relatively complete ELLA analysis pipeline.** 
 <br>
 <br>
 
@@ -28,7 +28,7 @@ ELLA/scripts/demo/complete_demo/
 The data is a subset of the processed seqFISH+ embryonic fibroblast dataset. 
 The input data (`input/complete_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional) with 20 cells and 50 genes. 
 
-The script of this demo is `complete_demo.ipynb`, you should be able to run it locally by yourself, expecting the following steps and outputs:
+The script of this demo is `complete_demo.ipynb`, you should be able to run it locally by yourself (run time around 3min), expecting the following steps and outputs:
 
 1. Initiating ELLA:
 ```python
