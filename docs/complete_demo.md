@@ -63,7 +63,7 @@ ella_demo.weighted_density_est()
 # likelihood ratio test
 ella_demo.compute_pv()
 ```
-4. We can now clustering the estimated (significant) expression intensities into clusters of patterns. We find the optimal number of kmeans clusters K with the ELBOW method where K is chosen as a point where the distortion/inertia begins to decrease more slowly:
+4. We can now cluster the estimated (significant) expression intensities into clusters of patterns. We find the optimal number of kmeans clusters K with the ELBOW method where K is chosen as a point where the distortion/inertia begins to decrease more slowly:
 ```python
 ella_demo.pattern_clustering()
 ```
