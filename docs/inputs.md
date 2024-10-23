@@ -12,8 +12,10 @@ ELLA mainly takes two pandas data frames as inputs.
 A pandas data frame (`expr`) with a few columns:
 - spatial gene expression including the coordinates (`x`, `y`) and the corresponding counts (`umi`) 
 - cell center (`centerX`, `centerY`)
-- and, cell type (`type`), cell ID (`cell`), gene ID (`gene`)  <br>
-    
+- cell type (`type`), cell ID (`cell`), gene ID (`gene`)  <br>
+- and the total number expression counts of cells (`sc_total`), rows corresponding to the same cell should have the same value for this column.
+  
+
 Here's how the data frame looks like:
 <div style="margin: 0 auto; text-align: center;"> 
   <img src="{{ site.baseurl }}/images/input_expr_df.png" width="500" />
