@@ -26,7 +26,7 @@ The full list of customizable arguments and their default choices and functions 
 | `max_ntanbin` | int | 25 | Number of bins for computing relative positions |
 | `ri_clamp_min` | float | 1e-2 | Min relative position |
 | `ri_clamp_max` | float | 1.0 | Max relative position |
-| `hpp_solution` | str | 'analytical' | Use analytical solution for HPP |
+| `hpp_solution` | str | 'numercial' | Use numercial solution for HPP |
 | `lam_filter` | float | 0.0 | Exclude significant genes with max(lam)-min(lam) <= 0.0 |
 
 The default values can be costomized while instantiating the class, for example
