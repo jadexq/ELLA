@@ -73,7 +73,7 @@ class ELLA:
     '''
     Class of ELLA
     '''
-    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, ri_clamp_min=0.01, ri_clamp_max=1.0, hpp_solution='analytical', lam_filter=0.0, L1_lam=0):
+    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, ri_clamp_min=0.01, ri_clamp_max=1.0, hpp_solution='numerical', lam_filter=0.0, L1_lam=0):
         '''
         Constructor
         Args:
@@ -1147,6 +1147,7 @@ class ELLA:
         lightblue2 = '#189AB4'
         darkorange2 = '#FA8128'
         colors = [red, lightorange, lightgreen, lightblue, darkblue, purple, pink, lightgreen2, lightblue2, darkorange2]
+        self.colors10 = colors
         
         # barplot number(%) of genes
         labels_all = np.concatenate(list(self.labels_dict.values()))
