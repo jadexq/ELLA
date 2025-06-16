@@ -1,6 +1,7 @@
 ---
 title: Reproducibility
 layout: default
+parent: ella_v1
 nav_order: 7
 has_children: true
 permalink: docs/reproduce

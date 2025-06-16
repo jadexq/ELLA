@@ -1,6 +1,7 @@
 ---
 title: Advanced Usage
 layout: default
+parent: ella_v1
 nav_order: 6
 ---
 

@@ -1,5 +1,6 @@
 .DS_Store
 __pycache__
+/docs/_site
 lightning_logs/
 
 simulated_data.jsonl
