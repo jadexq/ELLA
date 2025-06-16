@@ -2,6 +2,7 @@
 title: MERFISH2
 layout: default
 parent: Reproducibility
+grand_parent: ELLA v1
 nav_order: 5
 ---
 

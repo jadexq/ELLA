@@ -1,10 +1,10 @@
 ---
 title: Reproducibility
 layout: default
-parent: ella_v1
+parent: ELLA v1
 nav_order: 7
 has_children: true
-permalink: docs/reproduce
+permalink: /ella_v1/reproduce/
 has_toc: false
 ---
 
@@ -12,10 +12,10 @@ has_toc: false
 
 Here's the codes for reproducing the real data application results in the ELLA manuscript.
 
-- [Seq-Scope Mouse Liver Data]({{ site.baseurl }}/reproduce/rp_seqscope)
-- [Stereo-seq Mouse Embryo Data]({{ site.baseurl }}/reproduce/rp_stereoseq)
-- [SeqFISH+ Mouse Embryonic Fibroblast Data]({{ site.baseurl }}/reproduce/rp_seqfish)
-- [MERFISH Adult Mouse Brain Data]({{ site.baseurl }}/reproduce/rp_merfish1)
-- [MERFISH Human Osteosarcoma Data]({{ site.baseurl }}/reproduce/rp_merfish2)
+- [Seq-Scope Mouse Liver Data]({{ site.baseurl }}/ella_v1/reproduce/rp_seqscope)
+- [Stereo-seq Mouse Embryo Data]({{ site.baseurl }}/ella_v1/reproduce/rp_stereoseq)
+- [SeqFISH+ Mouse Embryonic Fibroblast Data]({{ site.baseurl }}/ella_v1/reproduce/rp_seqfish)
+- [MERFISH Adult Mouse Brain Data]({{ site.baseurl }}/ella_v1/reproduce/rp_merfish)
+- [MERFISH Human Osteosarcoma Data]({{ site.baseurl }}/ella_v1/reproduce/rp_merfish2)
 
   

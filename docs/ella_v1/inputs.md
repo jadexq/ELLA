@@ -1,7 +1,7 @@
 ---
 title: ELLA's Inputs
 layout: default
-parent: ella_v1
+parent: ELLA v1
 nav_order: 5
 ---
 
