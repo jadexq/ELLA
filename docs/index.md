@@ -14,7 +14,7 @@ nav_order: 1
 ELLA (subcellular Expression LocaLization Analysis) is a statistical method that integrates high-resolution spatially resolved gene expression data with histology imaging data to identify the subcellular mRNA localization patterns in various spatially resolved transcriptomic techniques. 
 
 *What's the model?*\
-ELLA models spatial count data through a nonhomogeneous Poisson process model and relies on an expression gradient function to characterize the subcellular mRNA localization pattern, producing effective control of type I errors and yielding high statistical power.
+ELLA models spatial count data through a (over-dispersed) nonhomogeneous Poisson process model and relies on an expression gradient function to characterize the subcellular mRNA localization pattern, producing effective control of type I errors and yielding high statistical power.
 <div style="margin: 0 auto; text-align: center;"> 
 <img src="{{ site.baseurl }}/images/demo_ella_overview.png" width="600" />
 </div>

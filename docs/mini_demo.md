@@ -25,7 +25,7 @@ ELLA/scripts/demo/mini_demo/
 │   ├── cells_point_infos.json
 │   ├── cells_polygon.json
 │   └── training_data.jsonl
-└── run1.sh
+└── run_mini_demo.sh
 ```
 The input data (`mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/inputs.html).
 
@@ -43,7 +43,10 @@ The outputs including `cells_center.json`, `cells_point_infos.json`, `cells_poly
 ella-train --config-name mini_demo
 ```
 
-**2b.** We can run multiple genes in parallel using scripts e.g. `run_demo1.sh` on a computing cluster.
+**2b.** We can run multiple genes in parallel using scripts e.g. `run_mini_demo.sh` on a computing cluster.
+```bash
+bash run_mini_demo.sh
+```
 
 
 ### Check out ELLA's results <br>
@@ -96,8 +99,8 @@ reject, p_fdr, _, _ = multipletests(p_cauchy, alpha=0.05, method='fdr_by')
 print(np.sum(p_fdr<=0.05))
 print(p_fdr)
 ```
-
-```text
+Prints:
+```bash
 4
 [2.31296463e-16 0.00000000e+00 4.62592927e-16 2.38025062e-04]
 ```

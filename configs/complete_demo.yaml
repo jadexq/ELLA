@@ -4,10 +4,10 @@ defaults:
 
 log:
   should_overwrite: true
-  save_dir: "lightning_logs/debug"
+  save_dir: "your_dir/ELLA/scripts/demo/complete_demo/lightning_logs/run1"
 
 data:
-  data_path: "/Users/jadewang/Desktop/ELLA2_data_res/res/training_data.jsonl"
+  data_path: "your_dir/ELLA/scripts/demo/complete_demo/prepared_data/training_data.jsonl"
   gene_idx: 0
 
 kernel_params:
@@ -33,18 +33,40 @@ kernel_params:
     b0: 1.26
   - a0: 2.71
     b0: 1.0
+  - a0: 1.0
+    b0: 2.0
+  - a0: 1.13
+    b0: 2.19
+  - a0: 1.38
+    b0: 2.52
+  - a0: 1.88
+    b0: 3.06
+  - a0: 2.73
+    b0: 3.6
+  - a0: 3.5
+    b0: 3.5
+  - a0: 3.6
+    b0: 2.73
+  - a0: 3.06
+    b0: 1.88
+  - a0: 2.52
+    b0: 1.38
+  - a0: 2.19
+    b0: 1.31
+  - a0: 2.0
+    b0: 1.0
 
 model:
   is_debug: true
   optimizer:
-    lr: 1e-2
-  n_bins: 10
-  alpha_init: 0.5
-  beta_init: 0.5
+    lr: 1e-3
+  n_bins: 20
+  beta_init: 0.1
   sigma02_init: 0.01
 
 trainer:
-  max_epochs: 500
+  max_epochs: 200
+  enable_progress_bar: false
 
 estimation:
   search_dir: "${log.save_dir}"

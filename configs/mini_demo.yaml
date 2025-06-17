@@ -4,10 +4,10 @@ defaults:
 
 log:
   should_overwrite: true
-  save_dir: "your_dir/lightning_logs/run1"
+  save_dir: "your_dir/ELLA/scripts/demo/mini_demo/lightning_logs/run1"
 
 data:
-  data_path: "your_dir/out/training_data.jsonl"
+  data_path: "your_dir/ELLA/scripts/demo/mini_demo/prepared_data/training_data.jsonl"
   gene_idx: 0
 
 kernel_params:
@@ -60,13 +60,12 @@ model:
   is_debug: true
   optimizer:
     lr: 1e-3
-  n_bins: 10
-  # alpha_init: 5.0
+  n_bins: 20
   beta_init: 0.1
   sigma02_init: 0.01
 
 trainer:
-  max_epochs: 150
+  max_epochs: 200
   enable_progress_bar: false
 
 estimation:
