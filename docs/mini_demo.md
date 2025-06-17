@@ -27,25 +27,23 @@ ELLA/scripts/demo/mini_demo/
 │   └── training_data.jsonl
 └── run1.sh
 ```
-The input data (`input/mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/inputs.html).
+The input data (`mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/inputs.html).
 
 
 ### ELLA Anlysis <br>
 **1.** We first process the input data. This step includes registering cells (computing relative positions) and restructuring the data for efficient cell-type and gene-level parallelization.
 ```python
-python -m ella.data.prepare_data -i your_dir/mini_demo/mini_demo_data.pkl -o prepared_data
+python -m ella.data.prepare_data -i your_dir/ELLA/scripts/demo/mini_demo/mini_demo_data.pkl -o your_dir/ELLA/scripts/demo/mini_demo/prepared_data
 ```
 The outputs including `cells_center.json`, `cells_point_infos.json`, `cells_polygon.json`, and `training_data.jsonl`.
 
-**2a.** We can run one gene on a local machine by first training a ELLA model based a recipe, e.g. configs/ella_run1.yaml
+**2a.** We can run one gene on a local machine by first training a ELLA model based a recipe e.g. ELLA/configs/mini_demo.yaml
+
 ```python
-ella-train --config-name debug
+ella-train --config-name mini_demo
 ```
-followd by conduct estimation using
-```python
-ella-estimate -d lightning_logs/run1 -p "gene_0-kernel_.*" -b 10 -o your_dir/gene_0_estimation_result.json
-```
-**2b.** We can run multiple genes in parallel with, for example, `run_demo1.sh` on computing clusters.
+
+**2b.** We can run multiple genes in parallel using scripts e.g. `run_demo1.sh` on a computing cluster.
 
 
 ### Check out ELLA's results <br>
@@ -53,8 +51,7 @@ ella-estimate -d lightning_logs/run1 -p "gene_0-kernel_.*" -b 10 -o your_dir/gen
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-# import alphashape
-# define colors
+
 red = '#c0362c'
 lightorange = '#fabc2e'
 lightgreen = '#93c572'
@@ -72,10 +69,10 @@ gs = fig.add_gridspec(nr, nc,
                    height_ratios=[1]*nr)
 gs.update(wspace=0.3, hspace=0.5)
 
+res_dir = 'your_dir/ELLA/scripts/demo/mini_demo/lightning_logs/run1'
 p_cauchy = []
-# for i in range(gene_idx_start, gene_idx_end):
-for i, g in enumerate([3,0,2,1]):
-    path = f'{res_dir}/gene_{g}_estimation_result.json'
+for i in range(4):
+    path = f'{res_dir}/gene_{i}_estimation_result.json'
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             res = json.load(f)
@@ -116,7 +113,7 @@ We can further plot the cells and genes to have a more intuitive sense of the lo
 import alphashape
 
 # load intput data
-input_data = pd.read_pickle('/net/mulan/home/jadewang/revision/real_data/demo1/mini_demo_data.pkl')
+input_data = pd.read_pickle('your_dir/ELLA/scripts/demo/mini_demo/mini_demo_data.pkl')
 cell_type = 'fibroblast'
 genes = input_data['genes'][cell_type]
 cells = input_data['cells'][cell_type]
