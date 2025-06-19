@@ -7,7 +7,6 @@ nav_order: 1
 <div style="margin: 0 auto; text-align: center;"> 
   <img src="{{ site.baseurl }}/images/home_logo.png" width="200" />
 </div>
-
 **Welcome to ELLA's page!**
 
 *What's ELLA for?*\

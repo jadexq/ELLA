@@ -27,7 +27,7 @@ ELLA/scripts/demo/mini_demo/
 │   └── training_data.jsonl
 └── run_mini_demo.sh
 ```
-The input data (`mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/inputs.html).
+The input data (`mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/ella_v1/inputs.html).
 
 
 ### ELLA Anlysis <br>
@@ -37,7 +37,7 @@ python -m ella.data.prepare_data -i your_dir/ELLA/scripts/demo/mini_demo/mini_de
 ```
 The outputs including `cells_center.json`, `cells_point_infos.json`, `cells_polygon.json`, and `training_data.jsonl`.
 
-**2a.** We can run one gene on a local machine by first training a ELLA model based a recipe e.g. ELLA/configs/mini_demo.yaml
+**2a.** We can run one gene on a local machine by training a ELLA model based a recipe e.g. ELLA/configs/mini_demo.yaml
 
 ```python
 ella-train --config-name mini_demo

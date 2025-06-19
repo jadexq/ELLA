@@ -1,7 +1,7 @@
 ---
 title: ELLA v1
 layout: default
-nav_order: 9
+nav_order: 6
 has_children: true
 has_toc: false
 ---

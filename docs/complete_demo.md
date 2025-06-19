@@ -10,7 +10,8 @@ nav_order: 4
 Here's a demo introducing a complete ELLA analysis pipeline.
 <br>
 
-The script and data that will be used in this demo should have already been downloaded (while cloning the ELLA repo). You should be able to find these at your local ELLA folder:
+The script that will be used in this demo should have already been downloaded (while cloning the ELLA repo). The data (`complete_demo_data.pkl`) that will be used can be downloaded from [here](https://github.com/jadexq/ELLA/releases/download/v0.0.2/complete_demo_data.pkl). You should be able to orgnize these at your local ELLA folder as follows:
+
 ```
 ELLA/scripts/demo/complete_demo/
 ├── lightning_logs
