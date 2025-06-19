@@ -50,26 +50,21 @@ poetry install
 ## Repo Structure
 ```
 ./ELLA/
-├── setup.py % project config
-├── requirements.txt % dependencies
-├── ELLA % ELLA source code
-│   └── ELLA.py
+├── poetry.lock % poetry dependency lock file
+├── pyproject.toml % project metadata and dependencies
+├── ella % ELLA source code
+│   ├── cli
+│   ├── data
+│   ├── models
+│   ├── utils
+│   ├── options.py
+│   └── __init__.py
 ├── docs % source code of the tutorial website
-│   ├── ...
+│   └── ...
 ├── scripts
-│   ├── demo % code and data for the minimum and complete demos
-│   │   ├── mini_demo
-│   │   └── complete_demo
-│   ├── analysis % mRNA characteristic analysis code for each dataset
-│   |   ├── merfish1
-│   |   ├── seqfish
-│   |   ├── seqscope
-│   |   └── stereoseq
-│   └── preprocessing % data preprocessing code for each data set
-│       ├── merfish1
-│       ├── seqfish
-│       ├── seqscope
-│       └── stereoseq
+│   └── demo % code and data for the minimum and complete demos
+│       ├── mini_demo
+│       └── complete_demo
 └── README.md
 
 ```
@@ -89,6 +84,7 @@ Stereo-seq
 - [data_Myoblasts.pkl](sha256:03880a2626f6348a8638f68c46da2c29741dd2cd546eab0becc5039a521a26d3)
 - [data_Cardiomyocytes.pkl](sha256:8b6a7373c1e68037421c26ac552c7e7c81eb7ca4f350a22c8ba1ea2d81b646f4)
   
+
 SeqFISH+
 - [data_Fibroblast.pkl](sha256:91fd8a86cd275f0fbe3f4dcd136c4f0eec9b37c4a8199e33eb7ae9f77ac44e29)
 
