@@ -20,32 +20,29 @@ poetry install
     python -m ella.data.simulate_data
     ```
     It will generate a `simulated_data.json` in the current directory
-2. Train a model with a recipe, e.g. `configs/debug.yaml`
+2. Prepare data from pickle
+   ```bash
+   python -m ella.data.prepare_data -i your_dir/data.pkl -o prepared_data
+   ```
+3. Visualize data
+   ```bash
+   ella-visualize -d . -c '2102_686' -g 'Alb'
+   ```
+4. Train a model with a recipe, e.g. `configs/mini_demo.yaml`
     ```bash
-    ella-train --config-name debug
+    ella-train --config-name mini_demo
     ```
     It will save all outputs in `${log.save_dir}`
     (stopping rules is current hard coded!)
-3. Open tensorboard
+5. Open tensorboard for checking convergence
     ```bash
     tensorboard --logdir lightning_logs/debug/gene_0-kernel_-1
     ```
-4. Estimate
+6. Estimate
    ```bash
    ella-estimate -d lightning_logs/debug -p "gene_0-kernel_.*" -b 10 -o path/to/out.json
    ```
 
-
-### Data Preparation
-
-1. Prepare data from pickle
-   ```bash
-   python -m ella.data.prepare_data -i your_dir/data.pkl -o prepared_data
-   ```
-2. Visualize data
-   ```bash
-   ella-visualize -d . -c '2102_686' -g 'Alb'
-   ```
 
 ## Repo Structure
 ```
