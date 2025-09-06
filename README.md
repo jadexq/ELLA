@@ -1,3 +1,6 @@
+## ELLA: Modeling the Subcellular Spatial Variation of Gene Expression within Cells in High-Resolution Spatial Transcriptomics
+[![DOI](https://zenodo.org/badge/798584399.svg)](https://doi.org/10.5281/zenodo.17065819)
+
 ## Usage
 
 Check out the [tutorial pages](https://jadexq.github.io/ELLA/) for demos and documentations to get started with ELLA.
