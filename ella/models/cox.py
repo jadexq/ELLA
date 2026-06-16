@@ -27,43 +27,44 @@ class PolicyNetwork(nn.Module):  # pylint: disable=too-many-instance-attributes
         self.sqrt_beta = nn.Parameter(torch.tensor(sqrt_beta_init), requires_grad=cfg.beta_requires_grad)  #!!!
         self.sqrt_sigma02 = nn.Parameter(torch.tensor(sqrt_sigma02_init))
         # self.log_rho = nn.Parameter(torch.randn(1) * 0.01)
-  
+        self.rho = 0.0
+        # precompute constant per-bin geometry (#3): r_mid and the beta kernel varphi
+        # depend only on the fixed n_bins / a0 / b0, so compute once here instead of
+        # rebuilding (and calling scipy) every forward. Registered as buffers so they
+        # follow the module's device/dtype.
+        r_mid = (torch.arange(self.n_bins, dtype=torch.float32) + 0.5) / self.n_bins
+        varphi = torch.as_tensor(
+            beta_dist.pdf(r_mid.numpy(), self.a0, self.b0), dtype=torch.float32
+        )  #!!! beta kernel
+        # persistent=False: keep them out of state_dict (they are constants
+        # recomputed in __init__; on_train_end assumes state_dict holds only the
+        # scalar sqrt_* params) while still following the module's device.
+        self.register_buffer("r_mid", r_mid, persistent=False)
+        self.register_buffer("varphi", varphi, persistent=False)
 
-    def forward(self, sc_totals) -> List[List[Tuple[Tensor, Tensor]]]:
+    def forward(self, sc_totals) -> Tuple[Tensor, Tensor]:
         """
         Returns
         -------
-        [[(mu, sigma), ...], ...]
-        shape: num_cell * num_bin
+        mu:    [num_cell, num_bin]  per-(cell, bin) Normal mean
+        sigma: [num_bin]            per-bin Normal std (broadcasts over cells)
         """
-        cells_stats: List[List[Tuple[Tensor, Tensor]]] = []
+        # vectorized over (cells x bins): one tensor op replaces the per-(cell, bin)
+        # Python loop (#2). Same math as the loop, using r_mid / varphi precomputed
+        # in __init__ (#3).
         alpha = torch.square(self.sqrt_alpha)
         beta = torch.square(self.sqrt_beta)
         sigma02 = torch.square(self.sqrt_sigma02)
-        # sigma02 = torch.tensor(0.0001)
-        # rho = torch.exp(self.log_rho)
-        rho = 0.0
-        for sc_total in sc_totals:
-            bins_stats: List[Tuple[Tensor, Tensor]] = []
-            # sc_total = sc_total/1000
-            sc_total = sc_total/1.0
-            for bin_idx in range(self.n_bins):
-                r_mid = (bin_idx + 0.5) / self.n_bins # using r_mid
-                if True:
-                    varphi = beta_dist.pdf(r_mid, self.a0, self.b0) #!!! beta kernel
-                if False:
-                    # varphi = indicator(r_mid, self.a0, self.b0) #!!! stepwise kernel
-                    varphi = 1 if self.a0 <= r_mid <= self.b0 else 0
-                mu = (alpha + beta * varphi) * sc_total * 2 * math.pi * r_mid
-                # r_right = (bin_idx + 1) / self.n_bins # using r_right
-                # varphi = beta_dist.pdf(r_right, self.a0, self.b0)
-                # mu = (alpha + beta * varphi) * sc_total * 2 * math.pi * r_right
-                # sigma = torch.sqrt(sigma02 + rho * varphi) * sc_total * 2 * math.pi * r_mid # not using this
-                sigma = torch.sqrt(sigma02 + rho * varphi)
-                bin_stats: Tuple[Tensor, Tensor] = (mu, sigma)
-                bins_stats.append(bin_stats)
-            cells_stats.append(bins_stats)
-        return cells_stats
+        sc_total = sc_totals / 1.0  # [n_cells]
+        # mu[c, b] = (alpha + beta * varphi[b]) * sc_total[c] * 2*pi * r_mid[b]
+        mu = (
+            (alpha + beta * self.varphi)[None, :]
+            * sc_total[:, None]
+            * 2 * math.pi
+            * self.r_mid[None, :]
+        )  # [n_cells, n_bins]
+        sigma = torch.sqrt(sigma02 + self.rho * self.varphi)  # [n_bins]
+        return mu, sigma
 
 
 class COX(L.LightningModule):
@@ -82,40 +83,34 @@ class COX(L.LightningModule):
         self.policy_net = PolicyNetwork(cfg=cfg, init_values=init_values, kernel_param=kernel_param)
         self.epoch_infos: List[Dict] = []
 
-    def get_lambda_star_i(self, cells_sc_total) -> List[List[Tuple[Tensor, Tensor]]]:
+    def get_lambda_star_i(self, cells_sc_total) -> Tuple[Tensor, Tensor]:
         """
         Returns
         -------
-        [[(sample, log_prob), ...], ...]
-        shape: num_cell * num_bin
+        lam:      [num_cell, num_bin]  sampled lambda* (post-relu)
+        log_prob: [num_cell, num_bin]  log_prob of the pre-relu sample
         """
-        all_lambda_star_i: List[List[Tuple[Tensor, Tensor]]] = []
-        cells_stats: List[List[Tuple[Tensor, Tensor]]] = self.policy_net(cells_sc_total)
-        for bins_stats in cells_stats:
-            cell_lambda_star_i: List[Tuple[Tensor, Tensor]] = []
-            for bin_stats in bins_stats:
-                mu, sigma = bin_stats
-                normal_dist = torch.distributions.Normal(mu, sigma)
-                lambda_star_i = normal_dist.rsample()
-                log_prob_lambda_star_i = normal_dist.log_prob(lambda_star_i)
-                lambda_star_i = F.relu(lambda_star_i)
-                cell_lambda_star_i.append((lambda_star_i, log_prob_lambda_star_i))
-            all_lambda_star_i.append(cell_lambda_star_i)
-        return all_lambda_star_i
+        # vectorized over (cells x bins): one batched Normal + a single rsample()
+        # replaces the per-(cell, bin) distribution construction loop (#2).
+        mu, sigma = self.policy_net(cells_sc_total)  # [n_cells, n_bins], [n_bins]
+        normal_dist = torch.distributions.Normal(mu, sigma)
+        lambda_star_i = normal_dist.rsample()  # [n_cells, n_bins]
+        log_prob = normal_dist.log_prob(lambda_star_i)  # on the pre-relu sample
+        lam = F.relu(lambda_star_i)
+        return lam, log_prob
 
     def forward(self, batch) -> Tuple[Tensor, Tensor]:  # pylint: disable=arguments-differ
         cells_points, cells_points_length, cells_sc_total = batch
-        cells_lambda_star_i: List[List[Tuple[Tensor, Tensor]]] = self.get_lambda_star_i(cells_sc_total)
+        lam, log_prob = self.get_lambda_star_i(cells_sc_total)  # [n_cells, n_bins] each
         cells_log_weight = []  # exp argument per cell: cell_reward - log(n!)
         cells_sum_log_prob = []
         cells_reward = []
-        for cell_lambda_star_i, cell_points, cell_points_length in zip(
-            cells_lambda_star_i, cells_points, cells_points_length
+        for cell_i, (cell_points, cell_points_length) in enumerate(
+            zip(cells_points, cells_points_length)
         ):
-            # vectorized over bins: lam_vec[b] = sampled lambda* for radial bin b
-            lam_vec = torch.stack([x[0] for x in cell_lambda_star_i]).squeeze(-1)  # [n_bins]
+            lam_vec = lam[cell_i]  # [n_bins]: sampled lambda* per radial bin
             int_lambda_star_i = torch.mean(lam_vec)
-            sum_log_prob = torch.sum(torch.stack([x[1] for x in cell_lambda_star_i]))
+            sum_log_prob = torch.sum(log_prob[cell_i])
             cell_points = cell_points[:cell_points_length]
             if len(cell_points) > 0: # if this cell has >0 num of points
                 # vectorized per-transcript bin lookup (replaces the per-molecule loop):

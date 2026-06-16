@@ -19,15 +19,40 @@ total 303.7s -> 205.7s = **1.48x (32% faster)**. The win is modest here only
 because the demo has few transcripts/cell, so #2 (per-`cell x bin` loop)
 dominates this scale; #1's payoff grows with transcripts/cell on real panels.
 
-## 2. Per-(cell x bin) Python loop in `PolicyNetwork.forward`
+## 2. Per-(cell x bin) Python loop in `PolicyNetwork.forward`  [FIXED]
 `ella/models/cox.py:46-65`. Runs `cells x 20 bins x epochs x kernels x genes`,
 each building a separate `torch.distributions.Normal` + `rsample()`. No
 vectorization. Hit as often as #1 but without the per-point factor.
 
-## 3. `scipy.stats.beta.pdf` inside the bin loop
+**Fix applied (with #3).** `forward` now builds `mu [n_cells, n_bins]` and
+`sigma [n_bins]` in one tensor op; `get_lambda_star_i` draws one batched
+`Normal(mu, sigma).rsample()` instead of `cells x bins` scalar distributions;
+`COX.forward` indexes the `[n_cells, n_bins]` lam / log_prob matrices (the
+`>0 points` drop and the #1 per-transcript gather are unchanged).
+
+## 3. `scipy.stats.beta.pdf` inside the bin loop  [FIXED]
 `ella/models/cox.py:53`. Same `cells x bins x epochs` frequency, but the result
 is **constant** (kernel `a0,b0` + `r_mid` are fixed). Pure waste; should be
 computed once per kernel. Also forces a NumPy roundtrip that blocks GPU use.
+
+**Fix applied (with #2).** `r_mid` and `varphi = beta.pdf(r_mid, a0, b0)` are
+precomputed once in `PolicyNetwork.__init__` as non-persistent buffers (out of
+`state_dict`, which `on_train_end` assumes holds only scalar params). The scipy
+call and NumPy roundtrip are gone from `forward`.
+
+**Result for #2+#3** (4-gene / 5-cell mini demo, seeded, `updates/run_fit.py`):
+total **205.7s -> 48.4s = 4.25x** incremental over #1; **303.7s -> 48.4s = 6.28x
+(84% faster)** cumulative vs the original. #2/#3 is the dominant win at this scale,
+as expected (few transcripts/cell, so #1's per-point factor is small here).
+
+Correctness: unlike #1 this is NOT bit-identical, because the batched `rsample()`
+consumes the RNG stream differently than `cells x bins` scalar draws, so the
+seeded stochastic-gradient trajectory differs. Validated two ways:
+`updates/test_vectorize_equiv.py` proves the math is bit-identical *given the same
+noise* (`mu` 3.8e-6 float32, `sigma`/`log_prob` exact, per-cell reward 4.8e-7);
+and a two-seed run shows base@42-vs-opt@42 lam(r) divergence (1-48% of curve span)
+is within same-code seed-to-seed spread (opt@42-vs-opt@99 = 14-60%), i.e. seed
+noise, not bias. Overlay in `updates/output/compare_lam_curves.png`.
 
 ## 4. 23 sequential trainings per gene
 `ella/cli/train.py:91-99`. Null + 22 kernels in a serial Python loop, each a
@@ -48,5 +73,6 @@ helps only if it converges early.
 only scaling; everything within a gene is serial.
 
 ## Highest leverage
-#1, #2, #3 (vectorize the loops, precompute `varphi`): likely an order-of-
-magnitude per-fit win. Then #4 (share/parallelize kernels across the 23 fits).
+#1, #2, #3 DONE: 6.28x on the mini demo (the per-fit forward is now vectorized
+and scipy-free). Next is #4 (share/parallelize the 23 kernel fits per gene),
+then #5/#6 (epoch budget, per-fit Lightning/IO overhead).
