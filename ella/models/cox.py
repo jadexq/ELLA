@@ -106,7 +106,8 @@ class COX(L.LightningModule):
     def forward(self, batch) -> Tuple[Tensor, Tensor]:  # pylint: disable=arguments-differ
         cells_points, cells_points_length, cells_sc_total = batch
         cells_lambda_star_i: List[List[Tuple[Tensor, Tensor]]] = self.get_lambda_star_i(cells_sc_total)
-        cells_loss = []
+        cells_log_weight = []  # exp argument per cell: cell_reward - log(n!)
+        cells_sum_log_prob = []
         cells_reward = []
         for cell_lambda_star_i, cell_points, cell_points_length in zip(
             cells_lambda_star_i, cells_points, cells_points_length
@@ -123,15 +124,20 @@ class COX(L.LightningModule):
                     lambda_star_i_points_log.append(torch.log(lambda_star_i_point + 1e-10))
                 sum_log_lambda_star_i_point = torch.sum(torch.stack(lambda_star_i_points_log))
                 cell_reward = -int_lambda_star_i + sum_log_lambda_star_i_point
-                # cell_loss = sum_log_prob * cell_reward
-                const = 0.0
-                if False: # currently don't use this
-                    if len(cell_points) > 200:
-                        const = 80.0
-                cell_loss = sum_log_prob * torch.exp(cell_reward - math.lgamma(len(cell_points) + 1) - const)
+                cells_log_weight.append(cell_reward - math.lgamma(len(cell_points) + 1))
+                cells_sum_log_prob.append(sum_log_prob)
                 cells_reward.append(cell_reward)
-                cells_loss.append(cell_loss)
-        loss = -torch.mean(torch.stack(cells_loss))
+        # Numerical stabilization (log-sum-exp trick): the per-cell weight is
+        # exp(cell_reward - log n!), whose argument grows with transcript count and
+        # overflows to inf in float32 (-> nan params -> Normal() crash). Subtract a
+        # DETACHED per-batch max before exp so the largest term is exp(0)=1. Because
+        # `m` carries no gradient, this only rescales the loss by the constant exp(-m):
+        # the gradient direction, the likelihood, and `reward` (used downstream for the
+        # LRT statistic / kernel weights) are all unchanged.
+        log_weight = torch.stack(cells_log_weight)
+        m = log_weight.max().detach()
+        cells_loss = torch.stack(cells_sum_log_prob) * torch.exp(log_weight - m)
+        loss = -torch.mean(cells_loss)
         reward = torch.sum(torch.stack(cells_reward))
         return loss, reward
 
