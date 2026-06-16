@@ -59,6 +59,20 @@ noise, not bias. Overlay in `updates/output/compare_lam_curves.png`.
 fresh Lightning `Trainer`. Multiplies everything above by ~23. Only `varphi`
 differs across kernels, so the forward could largely be shared.
 
+**Status: DEFERRED (2026-06-16).** Not implementing now. Hard constraint: any #4
+change must NOT alter ELLA pipeline outputs. Kernel-batching (one model, `varphi`
+as a `[23, ...]` axis) is the largest speedup but is NOT bit-identical (a batched
+`rsample()` reorders the RNG stream, same as #2), so it would change seeded
+results and is off the table unless outputs are re-validated. The
+behavior-preserving levers are (a) parallelizing the 23 independent fits across
+cores, each with its own seeding, and (b) the #6 overhead fixes (skip the per-fit
+best-checkpoint disk reload, cheaper logging). Practical urgency is low because
+gene-level parallelism (#7) already saturates a node: the `null_ng1000_mu5` run
+fit 100 genes in ~one gene's wall time (~2-3 min/gene, 116 cells / ~5
+transcripts/cell). **Revisit only if per-gene speed is still insufficient;
+profile first** (single-gene, per-fit setup/IO vs epoch compute) to decide
+parallelize vs #6 before touching any code.
+
 ## 5. Up to 200 epochs, full dataset per epoch
 `configs/mini_demo.yaml:68` (`max_epochs=200`). Single batch, `num_workers=0`,
 CPU by default. Sets the epoch multiplier for #1-#3; early-stop patience 10
@@ -74,5 +88,8 @@ only scaling; everything within a gene is serial.
 
 ## Highest leverage
 #1, #2, #3 DONE: 6.28x on the mini demo (the per-fit forward is now vectorized
-and scipy-free). Next is #4 (share/parallelize the 23 kernel fits per gene),
-then #5/#6 (epoch budget, per-fit Lightning/IO overhead).
+and scipy-free). #4 (the 23 kernel fits per gene) is DEFERRED by choice, not for
+lack of value: its biggest form (kernel-batching) is not bit-identical, and
+gene-level parallelism (#7) already covers the common case. Revisit #4/#5/#6
+(behavior-preserving parallelize, epoch budget, per-fit Lightning/IO overhead)
+only if per-gene speed is still insufficient.
