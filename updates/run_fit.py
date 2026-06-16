@@ -40,7 +40,7 @@ DATA_PATH = REPO / "scripts" / "demo" / "mimi_demo" / "prepared_data" / "trainin
 GENES = [0, 1, 2, 3]
 SEED = 42        # base seed; per-fit seed = SEED + 1000*gene_idx + (kernel_idx+1)
 LR = 1e-3        # stock lr; stable now that cox.py forward is overflow-safe (issue #6 fix)
-RUN_LABEL = "baseline"   # output/<RUN_LABEL>/ ; set "optimized" for the post-speedup run
+RUN_LABEL = "optimized"   # output/<RUN_LABEL>/ ; set "optimized" for the post-speedup run
 
 OUT = Path(__file__).resolve().parent / "output" / RUN_LABEL
 WORK = OUT / "_work"            # tensorboard logs + per-kernel result.json

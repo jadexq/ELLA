@@ -3,10 +3,21 @@
 Ranked by reasoning (how many times each runs x cost per hit). Not yet profiled.
 Frequencies below: `genes x kernels (23) x epochs (<=200) x cells x ...`.
 
-## 1. Per-transcript Python loop in `COX.forward`
+## 1. Per-transcript Python loop in `COX.forward`  [FIXED]
 `ella/models/cox.py:119-124`. Runs `points x cells x epochs x kernels x genes`.
 Every molecule is one Python iteration doing tensor `floor` / index / `log`.
 Scales with total transcript count; largest multiplier in the pipeline.
+
+**Fix applied.** Replaced the per-molecule loop with one vectorized clamp +
+gather + sum: `bin_idx = clamp(floor(cell_points * n_bins), max=n_bins-1)`,
+`sum_log = log(lam_vec[bin_idx] + 1e-10).sum()`. Same math (same binning, clamp,
+`+1e-10`), N python iterations -> ~3 tensor ops.
+
+**Result** (4-gene / 5-cell mini demo, seeded, `updates/run_fit.py`):
+lam(r) bit-identical to baseline (`max|dlam| = 0` all genes);
+total 303.7s -> 205.7s = **1.48x (32% faster)**. The win is modest here only
+because the demo has few transcripts/cell, so #2 (per-`cell x bin` loop)
+dominates this scale; #1's payoff grows with transcripts/cell on real panels.
 
 ## 2. Per-(cell x bin) Python loop in `PolicyNetwork.forward`
 `ella/models/cox.py:46-65`. Runs `cells x 20 bins x epochs x kernels x genes`,

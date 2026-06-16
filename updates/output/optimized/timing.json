@@ -1,0 +1,29 @@
+{
+  "genes": [
+    {
+      "gene_idx": 0,
+      "train_secs": 47.61586631927639,
+      "estimate_secs": 0.09259539982303977,
+      "n_kernels": 23
+    },
+    {
+      "gene_idx": 1,
+      "train_secs": 50.40250674309209,
+      "estimate_secs": 0.09063873393461108,
+      "n_kernels": 23
+    },
+    {
+      "gene_idx": 2,
+      "train_secs": 53.40154611831531,
+      "estimate_secs": 0.09004149166867137,
+      "n_kernels": 23
+    },
+    {
+      "gene_idx": 3,
+      "train_secs": 53.903886184096336,
+      "estimate_secs": 0.09012122498825192,
+      "n_kernels": 23
+    }
+  ],
+  "total_secs": 205.6872022151947
+}

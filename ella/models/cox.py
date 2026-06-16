@@ -112,17 +112,19 @@ class COX(L.LightningModule):
         for cell_lambda_star_i, cell_points, cell_points_length in zip(
             cells_lambda_star_i, cells_points, cells_points_length
         ):
-            int_lambda_star_i = torch.mean(torch.stack([x[0] for x in cell_lambda_star_i]).squeeze(-1))
+            # vectorized over bins: lam_vec[b] = sampled lambda* for radial bin b
+            lam_vec = torch.stack([x[0] for x in cell_lambda_star_i]).squeeze(-1)  # [n_bins]
+            int_lambda_star_i = torch.mean(lam_vec)
             sum_log_prob = torch.sum(torch.stack([x[1] for x in cell_lambda_star_i]))
-            lambda_star_i_points_log = []
             cell_points = cell_points[:cell_points_length]
             if len(cell_points) > 0: # if this cell has >0 num of points
-                for point in cell_points:
-                    bin_idx = torch.floor(point * self.n_bins).to(torch.int)
-                    bin_idx = torch.minimum(bin_idx, torch.tensor(self.n_bins-1)) #!!! equavalent to clamp points>1.0 to 1.0
-                    lambda_star_i_point, _lambda_star_i_point_log_prob = cell_lambda_star_i[bin_idx]
-                    lambda_star_i_points_log.append(torch.log(lambda_star_i_point + 1e-10))
-                sum_log_lambda_star_i_point = torch.sum(torch.stack(lambda_star_i_points_log))
+                # vectorized per-transcript bin lookup (replaces the per-molecule loop):
+                # bin each point's normalized radius, clamp points>1.0 to the last bin,
+                # gather lam* and sum log. Same math as the loop, one gather instead of N.
+                bin_idx = torch.clamp(
+                    torch.floor(cell_points * self.n_bins).long(), max=self.n_bins - 1
+                )  #!!! clamp points>1.0 to 1.0
+                sum_log_lambda_star_i_point = torch.log(lam_vec[bin_idx] + 1e-10).sum()
                 cell_reward = -int_lambda_star_i + sum_log_lambda_star_i_point
                 cells_log_weight.append(cell_reward - math.lgamma(len(cell_points) + 1))
                 cells_sum_log_prob.append(sum_log_prob)
