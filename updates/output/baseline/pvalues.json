@@ -1,0 +1,28 @@
+{
+  "fibroblast": {
+    "Slc38a2": {
+      "pv_fdr": 6.547627140705374e-07,
+      "pv_cauchy": 2.193082995760598e-07,
+      "best_kernel": 21,
+      "sig": true
+    },
+    "Col1a1": {
+      "pv_fdr": 6.547627140705374e-07,
+      "pv_cauchy": 1.571430113811445e-07,
+      "best_kernel": 9,
+      "sig": true
+    },
+    "Actn1": {
+      "pv_fdr": 6.547627140705374e-07,
+      "pv_cauchy": 3.120655697741448e-07,
+      "best_kernel": 10,
+      "sig": true
+    },
+    "Cyb5r3": {
+      "pv_fdr": 6.547627140705374e-07,
+      "pv_cauchy": 3.1428610275385793e-07,
+      "best_kernel": 3,
+      "sig": true
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "load_data": 0.074,
+  "register_cells": 0.774,
+  "nhpp_prepare": 0.086,
+  "nhpp_fit": 35.627,
+  "weighted_density_est": 0.016,
+  "compute_pv": 0.011,
+  "total_secs": 36.589
+}

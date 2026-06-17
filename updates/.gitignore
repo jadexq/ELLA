@@ -1,0 +1,6 @@
+__pycache__/
+
+# tensorboard logs + checkpoints (regenerable, bulky binaries)
+output/**/_work/
+
+output/**/run.log

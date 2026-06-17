@@ -1,0 +1,28 @@
+START Wed Jun 17 10:33:27 AM CDT 2026
+Number of cell types 1
+Average number of genes 4.0
+Average number of cells 5.0
+Number of default kernels 22
+[baseline] load_data: 0.074s
+Processing cells:   0%|          | 0/5 [00:00<?, ?it/s]Processing cells:  20%|██        | 1/5 [00:00<00:00,  5.87it/s]Processing cells:  40%|████      | 2/5 [00:00<00:00,  6.40it/s]Processing cells:  60%|██████    | 3/5 [00:00<00:00,  6.53it/s]Processing cells:  80%|████████  | 4/5 [00:00<00:00,  6.47it/s]Processing cells: 100%|██████████| 5/5 [00:00<00:00,  6.79it/s]Processing cells: 100%|██████████| 5/5 [00:00<00:00,  6.60it/s]
+Number of cells registered 5
+[baseline] register_cells: 0.774s
+Preparing data for fibroblast:   0%|          | 0/4 [00:00<?, ?it/s]Preparing data for fibroblast: 100%|██████████| 4/4 [00:00<00:00, 52.85it/s]
+[baseline] nhpp_prepare: 0.086s
+NHPP fitting for fibroblast:   0%|          | 0/4 [00:00<?, ?it/s]NHPP fitting for fibroblast:  25%|██▌       | 1/4 [00:12<00:37, 12.47s/it]NHPP fitting for fibroblast:  50%|█████     | 2/4 [00:21<00:20, 10.48s/it]NHPP fitting for fibroblast:  75%|███████▌  | 3/4 [00:28<00:08,  8.96s/it]NHPP fitting for fibroblast: 100%|██████████| 4/4 [00:35<00:00,  8.15s/it]NHPP fitting for fibroblast: 100%|██████████| 4/4 [00:35<00:00,  8.91s/it]
+[baseline] nhpp_fit: 35.627s
+[baseline] weighted_density_est: 0.016s
+Number of kernels in use 22
+fibroblast #sig=4
+[baseline] compute_pv: 0.011s
+
+[baseline] DONE
+  total: 36.6s  (fit: 35.6s)
+  fibroblast: 4/4 sig (FDR-BY<=0.05)
+    Slc38a2    pv_fdr=6.548e-07  best_kernel=21
+    Col1a1     pv_fdr=6.548e-07  best_kernel=9
+    Actn1      pv_fdr=6.548e-07  best_kernel=10
+    Cyb5r3     pv_fdr=6.548e-07  best_kernel=3
+
+wrote artifacts to /home/jadewang/ella2d_v3/competing_methods/ELLA1/updates/output/baseline
+EXIT=0 END Wed Jun 17 10:34:10 AM CDT 2026
