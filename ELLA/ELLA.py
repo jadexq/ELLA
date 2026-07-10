@@ -69,11 +69,47 @@ def loss_ll(pred):
     loss = - torch.sum(pred)
     return loss
 
+
+def cell_boundary_radius(mx, my, cx, cy, angles, step=0.5):
+    """Ray-march boundary radius R(phi) from a filled raster mask of one cell.
+    Casts a ray from (cx,cy) at each angle and returns the outermost filled
+    pixel distance (max-intersection, for non-convex cells); np.nan if a ray
+    never hits the mask (filled by periodic interpolation downstream)."""
+    mx = np.asarray(mx, dtype=np.int64); my = np.asarray(my, dtype=np.int64)
+    xmin, xmax = int(mx.min()), int(mx.max())
+    ymin, ymax = int(my.min()), int(my.max())
+    W, H = xmax - xmin + 1, ymax - ymin + 1
+    grid = np.zeros((H, W), dtype=bool)
+    grid[my - ymin, mx - xmin] = True
+    dmax = float(np.hypot(mx - cx, my - cy).max()) + 1.0
+    t = np.arange(0.0, dmax + step, step)
+    cos = np.cos(angles)[:, None]; sin = np.sin(angles)[:, None]
+    ix = np.rint(cx + cos * t[None, :]).astype(np.int64) - xmin
+    iy = np.rint(cy + sin * t[None, :]).astype(np.int64) - ymin
+    inb = (ix >= 0) & (ix < W) & (iy >= 0) & (iy < H)
+    hit = np.zeros_like(inb); hit[inb] = grid[iy[inb], ix[inb]]
+    R = np.where(hit, t[None, :], 0.0).max(axis=1)
+    R[R <= 0] = np.nan
+    return R
+
+
+def interp_periodic(query, grid_phi, R_grid):
+    """Circular linear interpolation of R over the circle at `query` angles;
+    NaN/empty grid entries are dropped and filled from valid neighbours."""
+    valid = np.isfinite(R_grid) & (R_grid > 0)
+    gp, rv = grid_phi[valid], R_grid[valid]
+    order = np.argsort(gp); gp, rv = gp[order], rv[order]
+    gp_ext = np.concatenate([gp - 2 * math.pi, gp, gp + 2 * math.pi])
+    rv_ext = np.concatenate([rv, rv, rv])
+    qq = np.mod(np.asarray(query) + math.pi, 2 * math.pi) - math.pi
+    return np.interp(qq, gp_ext, rv_ext)
+
+
 class ELLA:
     '''
     Class of ELLA
     '''
-    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, ri_clamp_min=0.01, ri_clamp_max=1.0, hpp_solution='numerical', lam_filter=0.0, L1_lam=0):
+    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=0.01, ri_clamp_max=1.0, hpp_solution='numerical', lam_filter=0.0, L1_lam=0):
         '''
         Constructor
         Args:
@@ -88,7 +124,8 @@ class ELLA:
             adam_niter_loss_unchange: for Adam early stopping, Adam stops if loss decrease < delta loss for adam_niter_loss_unchange iterations; default=20
             max_iter: Adam max number of iterations; default=5000
             min_iter: Adam min number of iterations; default=100
-            max_ntanbin: for cells registration, number of bins in pi/2 (a quantrant); default=25
+            max_ntanbin: DEPRECATED (no longer used by cell registration; kept for API compatibility). Former per-quadrant angular bin count; default=25
+            n_angles: for cell registration, number of ray-cast angles for the boundary radius R(phi) over the full circle; supersedes max_ntanbin; default=360
             ri_clamp_min: relative position truncated at min=ri_clamp_min; default=0.01
             ri_clamp_max: relative position truncated at max=ri_clamp_max; default=1.0
             hpp_solution: use 'analytical' or 'numerical' (Adam) to obtain hpp (null) model estimation; default='analytical'
@@ -106,6 +143,7 @@ class ELLA:
         self.nk: int # number of default kernels
         self.nc_all: int # total number of cells
         self.max_ntanbin = max_ntanbin
+        self.n_angles = n_angles # ray-cast boundary: number of R(phi) samples; supersedes max_ntanbin
         self.ri_clamp_min = ri_clamp_min
         self.ri_clamp_max = ri_clamp_max
         self.hpp_solution = hpp_solution
@@ -312,55 +350,21 @@ class ELLA:
 
         for ic, c in enumerate(tqdm(self.cell_list_all[:nc_demo], desc="Processing cells")):
             df_c = df_gbC.get_group(c).copy() # df for cell c
-            t = df_c.type.iloc[0] # cell type for cell c
             mask_df_c = self.cell_mask_df[self.cell_mask_df.cell == c] # get the mask df for cell c
             center_c = [int(df_c.centerX.iloc[0]), int(df_c.centerY.iloc[0])] # nuclear center of cell c
-            tanbin = np.linspace(0, pi/2, self.ntanbin_dict[t]+1)
-            delta_tanbin = (2*math.pi)/(self.ntanbin_dict[t]*4)
 
-            # add centered coord and ratio=y/x for df_c and mask_df_c
+            # centered transcript coords about the nuclear centre
             df_c['x_c'] = df_c.x.copy() - center_c[0]
             df_c['y_c'] = df_c.y.copy() - center_c[1]
             df_c['d_c'] = (df_c.x_c.copy()**2+df_c.y_c.copy()**2)**0.5
-            df_c['arctan'] = np.absolute(np.arctan(df_c.y_c / (df_c.x_c+self.epsilon)))
-            mask_df_c['x_c'] = mask_df_c.x.copy() - center_c[0]
-            mask_df_c['y_c'] = mask_df_c.y.copy() - center_c[1]
-            mask_df_c['d_c'] = (mask_df_c.x_c.copy()**2+mask_df_c.y_c.copy()**2)**0.5
-            mask_df_c['arctan'] = np.absolute(np.arctan(mask_df_c.y_c / (mask_df_c.x_c+self.epsilon)))
+            phi = np.arctan2(df_c.y_c.to_numpy(float), df_c.x_c.to_numpy(float))
 
-            # in each quatrant, find dismax_c for each tanbin interval using mask_df_c
-            mask_df_c_q_dict = {}
-            mask_df_c_q_dict['0'] = mask_df_c[(mask_df_c.x_c>=0) & (mask_df_c.y_c>=0)]
-            mask_df_c_q_dict['1'] = mask_df_c[(mask_df_c.x_c<=0) & (mask_df_c.y_c>=0)]
-            mask_df_c_q_dict['2'] = mask_df_c[(mask_df_c.x_c<=0) & (mask_df_c.y_c<=0)]
-            mask_df_c_q_dict['3'] = mask_df_c[(mask_df_c.x_c>=0) & (mask_df_c.y_c<=0)]
-            # compute the dismax_c
-            dismax_c_mat = np.zeros((self.ntanbin_dict[t], 4))
-            for q in range(4): # in each of the 4 quantrants
-                mask_df_c_q = mask_df_c_q_dict[str(q)]
-                mask_df_c_q['arctan_idx'] = (mask_df_c_q.arctan/delta_tanbin).astype(int) # arctan_idx from 0 to self.ntanbin_dict[t]-1
-                dismax_c_mat[mask_df_c_q.groupby('arctan_idx').max()['d_c'].index.to_numpy(),q] = mask_df_c_q.groupby('arctan_idx').max()['d_c'].values # automatically sorted by arctan_idx from 0 to self.ntanbin_dict[t]-1
-
-            # for df_c, for arctan in each interval, find max dis using dismax_c
-            df_c_q_dict = {}
-            df_c_q_dict['0'] = df_c[(df_c.x_c>=0) & (df_c.y_c>=0)]
-            df_c_q_dict['1'] = df_c[(df_c.x_c<=0) & (df_c.y_c>=0)]
-            df_c_q_dict['2'] = df_c[(df_c.x_c<=0) & (df_c.y_c<=0)]
-            df_c_q_dict['3'] = df_c[(df_c.x_c>=0) & (df_c.y_c<=0)]
-            d_c_maxc_dict = {}
-            for q in range(4): # in each of the 4 quantrants
-                df_c_q = df_c_q_dict[str(q)]
-                d_c_maxc_q = np.zeros(len(df_c_q))
-                df_c_q['arctan_idx'] = (df_c_q.arctan/delta_tanbin).astype(int) # arctan_idx from 0 to self.ntanbin_dict[t]-1
-                for ai in range(self.ntanbin_dict[t]):
-                    d_c_maxc_q[df_c_q.arctan_idx.values==ai] = dismax_c_mat[ai,q]
-                d_c_maxc_dict[str(q)] = d_c_maxc_q
-            d_c_maxc = np.zeros(len(df_c))
-            d_c_maxc[(df_c.x_c>=0) & (df_c.y_c>=0)] = d_c_maxc_dict['0']
-            d_c_maxc[(df_c.x_c<=0) & (df_c.y_c>=0)] = d_c_maxc_dict['1']
-            d_c_maxc[(df_c.x_c<=0) & (df_c.y_c<=0)] = d_c_maxc_dict['2']
-            d_c_maxc[(df_c.x_c>=0) & (df_c.y_c<=0)] = d_c_maxc_dict['3']
-            df_c['d_c_maxc'] = d_c_maxc
+            # ray-cast a continuous, gap-free boundary radius R(phi) from the cell mask
+            # (adopts ELLA2D's step-1 boundary; replaces the coarse per-quadrant max-radius binning)
+            angles_grid = np.linspace(-math.pi, math.pi, self.n_angles, endpoint=False)
+            R_grid = cell_boundary_radius(mask_df_c.x.to_numpy(), mask_df_c.y.to_numpy(),
+                                          center_c[0], center_c[1], angles_grid)
+            df_c['d_c_maxc'] = interp_periodic(phi, angles_grid, R_grid)
 
             # scale centered x_c and y_c 
             d_c_s = np.zeros(len(df_c))
