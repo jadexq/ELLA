@@ -70,46 +70,39 @@ def loss_ll(pred):
     return loss
 
 
-def cell_boundary_radius(mx, my, cx, cy, angles, step=0.5):
-    """Ray-march boundary radius R(phi) from a filled raster mask of one cell.
-    Casts a ray from (cx,cy) at each angle and returns the outermost filled
-    pixel distance (max-intersection, for non-convex cells); np.nan if a ray
-    never hits the mask (filled by periodic interpolation downstream)."""
-    mx = np.asarray(mx, dtype=np.int64); my = np.asarray(my, dtype=np.int64)
-    xmin, xmax = int(mx.min()), int(mx.max())
-    ymin, ymax = int(my.min()), int(my.max())
-    W, H = xmax - xmin + 1, ymax - ymin + 1
-    grid = np.zeros((H, W), dtype=bool)
-    grid[my - ymin, mx - xmin] = True
-    dmax = float(np.hypot(mx - cx, my - cy).max()) + 1.0
-    t = np.arange(0.0, dmax + step, step)
-    cos = np.cos(angles)[:, None]; sin = np.sin(angles)[:, None]
-    ix = np.rint(cx + cos * t[None, :]).astype(np.int64) - xmin
-    iy = np.rint(cy + sin * t[None, :]).astype(np.int64) - ymin
-    inb = (ix >= 0) & (ix < W) & (iy >= 0) & (iy < H)
-    hit = np.zeros_like(inb); hit[inb] = grid[iy[inb], ix[inb]]
-    R = np.where(hit, t[None, :], 0.0).max(axis=1)
-    R[R <= 0] = np.nan
+def polygon_boundary_radius(poly_x, poly_y, cx, cy, angles):
+    """Boundary radius R(phi) sampled from the cell POLYGON (exact), a faithful
+    port of ELLA2D's registration.sample_boundary_at_angles: shoot a ray from
+    (cx,cy) at each angle, intersect the polygon boundary, and take the OUTERMOST
+    crossing (max distance) for non-convex cells. Returns R at each angle. A closed
+    polygon is always crossed, so there are no empty rays (no interpolation needed).
+    """
+    from shapely.geometry import Polygon, Point, LineString
+    poly = Polygon(np.column_stack([np.asarray(poly_x, float), np.asarray(poly_y, float)]))
+    bnd = poly.boundary
+    center = Point(cx, cy)
+    angles = np.asarray(angles, float)
+    R = np.zeros(angles.shape[0], float)
+    L = 1e6  # ray length; >> any cell extent
+    for i, th in enumerate(angles):
+        ray = LineString([(cx, cy), (cx + L * math.cos(th), cy + L * math.sin(th))])
+        inter = bnd.intersection(ray)
+        if inter.is_empty:
+            R[i] = bnd.distance(center)
+        elif inter.geom_type == 'Point':
+            R[i] = math.hypot(inter.x - cx, inter.y - cy)
+        elif inter.geom_type == 'MultiPoint':
+            R[i] = max(math.hypot(p.x - cx, p.y - cy) for p in inter.geoms)
+        else:  # LineString / GeometryCollection (ray along an edge): match ELLA2D
+            R[i] = inter.distance(center)
     return R
-
-
-def interp_periodic(query, grid_phi, R_grid):
-    """Circular linear interpolation of R over the circle at `query` angles;
-    NaN/empty grid entries are dropped and filled from valid neighbours."""
-    valid = np.isfinite(R_grid) & (R_grid > 0)
-    gp, rv = grid_phi[valid], R_grid[valid]
-    order = np.argsort(gp); gp, rv = gp[order], rv[order]
-    gp_ext = np.concatenate([gp - 2 * math.pi, gp, gp + 2 * math.pi])
-    rv_ext = np.concatenate([rv, rv, rv])
-    qq = np.mod(np.asarray(query) + math.pi, 2 * math.pi) - math.pi
-    return np.interp(qq, gp_ext, rv_ext)
 
 
 class ELLA:
     '''
     Class of ELLA
     '''
-    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=0.01, ri_clamp_max=1.0, hpp_solution='numerical', lam_filter=0.0, L1_lam=0):
+    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=1e-5, ri_clamp_max=1.0-1e-5, hpp_solution='analytical', lam_filter=0.0, L1_lam=0):
         '''
         Constructor
         Args:
@@ -126,8 +119,8 @@ class ELLA:
             min_iter: Adam min number of iterations; default=100
             max_ntanbin: DEPRECATED (no longer used by cell registration; kept for API compatibility). Former per-quadrant angular bin count; default=25
             n_angles: for cell registration, number of ray-cast angles for the boundary radius R(phi) over the full circle; supersedes max_ntanbin; default=360
-            ri_clamp_min: relative position truncated at min=ri_clamp_min; default=0.01
-            ri_clamp_max: relative position truncated at max=ri_clamp_max; default=1.0
+            ri_clamp_min: relative position truncated at min=ri_clamp_min; default=1e-5
+            ri_clamp_max: relative position truncated at max=ri_clamp_max; default=1-1e-5
             hpp_solution: use 'analytical' or 'numerical' (Adam) to obtain hpp (null) model estimation; default='analytical'
             lam_filter: filter out estimated expression intensity lam with max(lam)-min(lam) <= lam_filter; default=0.0
             L1_lam: weight of L1 penalty on the scale parameter in nhpp model kernel fitting; default=0
@@ -165,7 +158,7 @@ class ELLA:
         self.gene_list_dict = {} # gene list of each cell type
         self.cell_list_dict = {} # cell list of each cell type
         self.beta_kernel_param_list = [] # kernel param list
-        self.cell_mask_df: pandas.DataFrame = None # df of cell masks
+        self.cell_poly = None # required dict cell_id -> (M,2) polygon vertices (native frame)
         self.data_df: pandas.DataFrame = None # df of gene expression data
         self.r_tl = {} # for nhpp fit, radius
         self.c0_tl = {} # for nhpp fit, read depth
@@ -261,7 +254,11 @@ class ELLA:
         self.gene_list_dict = data_dict['genes'] # gene lists for each type
         self.cell_list_dict = data_dict['cells'] # cell list for each type
         self.cell_list_all = data_dict['cells_all'] # list of all cells
-        self.cell_mask_df = data_dict['cell_seg'] # mask of cells
+        if 'cell_poly' not in data_dict or data_dict['cell_poly'] is None:
+            raise KeyError("ELLA v1 requires cell segmentation POLYGONS: input data "
+                           "must provide 'cell_poly' (dict cell_id -> (M,2) vertices). "
+                           "Raster 'cell_seg' masks are no longer supported.")
+        self.cell_poly = data_dict['cell_poly'] # cell polygons (native frame)
         self.data_df = data_dict['expr'] # gene expression data
         for t in self.type_list:
             self.ntanbin_dict[t] = self.max_ntanbin # ntanbin for each cell type, all set to the same value
@@ -288,45 +285,16 @@ class ELLA:
     
     def specify_ntanbin(self, input_ntanbin_dict=None):
         '''
-        Function for specifying ntanbin OR calculate ntanbin across cell types
+        DEPRECATED no-op. Cell registration now uses `n_angles` ray-cast boundary
+        samples (see register_cells); the former raster-resolution-based angular
+        binning (`ntanbin`) is obsolete. Kept for API compatibility.
         Args:
-            input_ntanbin_dict: give ntanbin manually (can be different across cell types), a dictionary, keys corresponding to cell type list
+            input_ntanbin_dict: if given, still stored in self.ntanbin_dict (unused downstream).
         Returns:
-            None: (update self.ntanbin_dict)
-        Note:
-            Running this function can take some time and is not necessary. Usually, specify `max_ntanbin` should be sufficient.
-            If run this function with input_ntanbin_dict=None, ntanbin will be calculated based on the resolution of cell segmentation boundary or mask.
+            None
         '''
-        if input_ntanbin_dict is not None: # use customized ntanbin across cell types
-            self.ntanbin_dict = input_ntanbin_dict 
-
-        if input_ntanbin_dict is None: # compute ntanbin for each cell type:
-            for t in self.type_list:
-                # specify ntanbin_gen based on cell seg mask/boundary
-                # random sample self.nc4ntanbin cells, allow replace
-                cell_list_sampled = np.random.choice(self.cell_list_dict[t], self.nc4ntanbin, replace=True)
-                cell_mask_df_sampled = self.cell_mask_df[self.cell_mask_df.cell.isin(cell_list_sampled)]
-                # compute the #x and #y unique coords of these sampled cells
-                nxu_sampled = []
-                nyu_sampled = []
-                for c in cell_list_sampled:
-                    mask_c = cell_mask_df_sampled[cell_mask_df_sampled.cell==c]
-                    nxu_sampled.append(mask_c.x.nunique())
-                    nyu_sampled.append(mask_c.y.nunique())
-                # specify ntanbin for pi/2 (a quantrant)
-                # if resolution is super high
-                if np.mean(nxu_sampled)>self.high_res and np.mean(nyu_sampled)>self.high_res:
-                    ntanbin=self.max_ntanbin
-                # if resolution is not super high
-                else:
-                    # require at least self.min_bp boundary points in each tanbin
-                    theta = 2*np.arctan(self.min_bp/np.mean(nxu_sampled+nyu_sampled))
-                    ntanbin_ = (pi/2)/theta
-                    ntanbin = np.ceil(ntanbin_)
-                    if ntanbin<self.min_ntanbin_error:
-                        print(f'Cell type {t} failed, resolution not high enougth to support the analysis')
-                # asign
-                self.ntanbin_dict[t] = ntanbin
+        if input_ntanbin_dict is not None:
+            self.ntanbin_dict = input_ntanbin_dict
 
 
     def register_cells(self, nc_demo=None, outfile='output/df_registered.pkl'):
@@ -350,21 +318,27 @@ class ELLA:
 
         for ic, c in enumerate(tqdm(self.cell_list_all[:nc_demo], desc="Processing cells")):
             df_c = df_gbC.get_group(c).copy() # df for cell c
-            mask_df_c = self.cell_mask_df[self.cell_mask_df.cell == c] # get the mask df for cell c
-            center_c = [int(df_c.centerX.iloc[0]), int(df_c.centerY.iloc[0])] # nuclear center of cell c
+            # nuclear centre of cell c (exact float centroid; not rounded to pixels)
+            cx_c = float(df_c.centerX.iloc[0]); cy_c = float(df_c.centerY.iloc[0])
 
             # centered transcript coords about the nuclear centre
-            df_c['x_c'] = df_c.x.copy() - center_c[0]
-            df_c['y_c'] = df_c.y.copy() - center_c[1]
+            df_c['x_c'] = df_c.x.copy() - cx_c
+            df_c['y_c'] = df_c.y.copy() - cy_c
             df_c['d_c'] = (df_c.x_c.copy()**2+df_c.y_c.copy()**2)**0.5
-            phi = np.arctan2(df_c.y_c.to_numpy(float), df_c.x_c.to_numpy(float))
 
-            # ray-cast a continuous, gap-free boundary radius R(phi) from the cell mask
-            # (adopts ELLA2D's step-1 boundary; replaces the coarse per-quadrant max-radius binning)
-            angles_grid = np.linspace(-math.pi, math.pi, self.n_angles, endpoint=False)
-            R_grid = cell_boundary_radius(mask_df_c.x.to_numpy(), mask_df_c.y.to_numpy(),
-                                          center_c[0], center_c[1], angles_grid)
-            df_c['d_c_maxc'] = interp_periodic(phi, angles_grid, R_grid)
+            # boundary radius R(phi) -> per-transcript d_c_maxc
+            # exact boundary from the cell POLYGON, matching ELLA2D's forward map:
+            # 360-grid sample_boundary_at_angles + nearest-grid (searchsorted) lookup
+            poly_c = self.cell_poly.get(c)
+            if poly_c is None:
+                raise KeyError(f"No cell polygon for cell {c!r}; ELLA v1 requires a "
+                               f"segmentation polygon for every cell.")
+            poly_c = np.asarray(poly_c, float)
+            angles_grid = np.linspace(0.0, 2.0*math.pi, self.n_angles, endpoint=False)
+            R_grid = polygon_boundary_radius(poly_c[:, 0], poly_c[:, 1], cx_c, cy_c, angles_grid)
+            phi = np.mod(np.arctan2(df_c.y_c.to_numpy(float), df_c.x_c.to_numpy(float)), 2.0*math.pi)
+            idx = np.clip(np.searchsorted(angles_grid, phi), 0, self.n_angles - 1)
+            df_c['d_c_maxc'] = R_grid[idx]
 
             # scale centered x_c and y_c 
             d_c_s = np.zeros(len(df_c))
@@ -629,7 +603,11 @@ class ELLA:
                     ### HPP analytical est and max loglikelihood value
                     # \sum_i=1^I Ji / 1/2 \sum_i=1^I c0i *(2pi)
                     hatB = np.sum(n_g_homo)/np.sum(c0_g_homo*math.pi) # B (alpha) est
-                    maxll = np.sum(np.log(np.array(c0_g)*2.0*math.pi)+np.log(hatB*np.array(r_g))-(np.array(c0_g)*2.0*math.pi/np.array(n_g))*(hatB/2.0)) # HPP loglikelihood
+                    # clamp r to match the (clamped) alternative likelihood, so the null and
+                    # alternative are evaluated on identical data in the LRT (hatB is still the
+                    # exact MLE: clamping r only shifts the constant log-r term, not the B term)
+                    r_g_clamp = np.clip(np.array(r_g), self.ri_clamp_min, self.ri_clamp_max)
+                    maxll = np.sum(np.log(np.array(c0_g)*2.0*math.pi)+np.log(hatB*r_g_clamp)-(np.array(c0_g)*2.0*math.pi/np.array(n_g))*(hatB/2.0)) # HPP loglikelihood
                     
                     ### MLE of (N)HPP
                     # Adam initial values
@@ -665,6 +643,7 @@ class ELLA:
                         # training
                         loss_prev = math.inf
                         counter = 0
+                        es = self.max_iter # early-stop iteration (set once; overwritten on break)
                         for step in range(0, self.max_iter):
                             optimizer.zero_grad()
                             predictions = model(r, c0, n, self.ri_clamp_min, self.ri_clamp_max)
@@ -672,7 +651,6 @@ class ELLA:
                             loss_hpp_g.append(loss.detach().numpy())
 
                             # early stopping
-                            es = self.max_iter
                             if step > self.min_iter:
                             #if step > 1:
                                 if np.abs(loss_prev - loss.item()) < DL:
@@ -691,10 +669,13 @@ class ELLA:
 
                             loss.backward()
                             optimizer.step()
-                            
-                        # save analytical results
+
+                        # save numerical HPP (null) results; recompute the loss at the final
+                        # params so mll matches the parameters after the last optimizer step
+                        with torch.no_grad():
+                            final_loss = loss_ll(model(r, c0, n, self.ri_clamp_min, self.ri_clamp_max))
                         B_est_t[ig, -1] = model.B.data
-                        mll_est_t[ig, -1] = - loss
+                        mll_est_t[ig, -1] = - final_loss
 
                     ## NHPP fit
                     # Adam numerical solution, loop over all kernels
@@ -713,6 +694,7 @@ class ELLA:
                         # training
                         loss_prev = math.inf
                         counter = 0
+                        es = self.max_iter # early-stop iteration (set once; overwritten on break)
                         loss_k = [] # save loss values across iterations for diagnostic plotting
                         for step in range(0, self.max_iter):
                             optimizer.zero_grad()
@@ -721,7 +703,6 @@ class ELLA:
                             loss_k.append(loss.detach().numpy())
 
                             # early stopping
-                            es = self.max_iter
                             if np.abs(loss_prev - loss.item()) < DL:
                                 counter = counter + 1
                             else:
@@ -739,10 +720,13 @@ class ELLA:
                             loss.backward()
                             optimizer.step()
 
-                        # save results
+                        # save results; recompute the loss at the final params so mll matches
+                        # the parameters after the last optimizer step
+                        with torch.no_grad():
+                            final_loss = loss_ll(model(r, c0, n, aa, bb, self.ri_clamp_min, self.ri_clamp_max, self.L1_lam))
                         A_est_t[ig, k] = model.A.data
                         B_est_t[ig, k] = model.B.data
-                        mll_est_t[ig, k] = - loss
+                        mll_est_t[ig, k] = - final_loss
                         early_stop_g.append(es)
                         loss_nhpp_g.append(loss_k)
                         
