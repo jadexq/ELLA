@@ -45,23 +45,6 @@ class model_beta(torch.nn.Module):
         return lli
 
 
-class model_null(torch.nn.Module):
-    '''
-    NHPP torch model, log likelihood null model
-    '''
-    def __init__(self, init_B):
-        super().__init__()
-        self.B = torch.nn.Parameter(torch.rand(())+init_B)
-
-    def forward(self, ri, c0i, ni, ri_clamp_min, ri_clamp_max):
-        '''
-        subject-wise log-likelihood
-        '''
-        ri_clamp = torch.clamp(ri, min=ri_clamp_min, max=ri_clamp_max)
-        lli = torch.log(c0i*2.0*math.pi)+torch.log(self.B*ri_clamp)-(c0i*2.0*math.pi/ni)*(self.B/2.0) 
-        return lli
-
-
 def loss_ll(pred):
     '''
     NHPP torch model, negative log likelihood as loss, for minimazing
@@ -102,7 +85,7 @@ class ELLA:
     '''
     Class of ELLA
     '''
-    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=1e-5, ri_clamp_max=1.0-1e-5, hpp_solution='analytical', lam_filter=0.0, L1_lam=0):
+    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=1e-5, ri_clamp_max=1.0-1e-5, lam_filter=0.0, L1_lam=0):
         '''
         Constructor
         Args:
@@ -121,7 +104,6 @@ class ELLA:
             n_angles: for cell registration, number of ray-cast angles for the boundary radius R(phi) over the full circle; supersedes max_ntanbin; default=360
             ri_clamp_min: relative position truncated at min=ri_clamp_min; default=1e-5
             ri_clamp_max: relative position truncated at max=ri_clamp_max; default=1-1e-5
-            hpp_solution: use 'analytical' or 'numerical' (Adam) to obtain hpp (null) model estimation; default='analytical'
             lam_filter: filter out estimated expression intensity lam with max(lam)-min(lam) <= lam_filter; default=0.0
             L1_lam: weight of L1 penalty on the scale parameter in nhpp model kernel fitting; default=0
         See also: https://jadexq.github.io/ELLA/advanced.html
@@ -139,7 +121,6 @@ class ELLA:
         self.n_angles = n_angles # ray-cast boundary: number of R(phi) samples; supersedes max_ntanbin
         self.ri_clamp_min = ri_clamp_min
         self.ri_clamp_max = ri_clamp_max
-        self.hpp_solution = hpp_solution
         self.lam_filter = lam_filter
         self.sig_cutoff = 0.05 # significant level 
         self.n_overflow = 500 # if x larger than this exp(x) will be overflow
@@ -200,7 +181,6 @@ class ELLA:
         self.initial_A_dict = {} # Adam A (beta in manuscript) initial value
         self.initial_B_dict = {} # Adam B (alpha in manuscript) initial value
         self.loss_nhpp_dict = {} # save nhpp loss function values for plotting and covergence check
-        self.loss_hpp_dict = {} # save hpp loss function values for plotting and covergence check
         self.early_stop_dict = {} # save if Adam stops early
         self.adaptive_learning_rate_dict = {} # save Adam adaptive learning rate
         self.adaptive_delta_loss_dict = {} # save Adam adaptive delta loss
@@ -578,7 +558,6 @@ class ELLA:
             initial_A_t = []
             initial_B_t = []
             loss_nhpp_t = []
-            loss_hpp_t = []
             early_stop_t = []
             adaptive_learning_rate_t = []
             adaptive_delta_loss_t = []
@@ -597,7 +576,6 @@ class ELLA:
 
                 if (len(r_g)>0):
                     loss_nhpp_g = []
-                    loss_hpp_g = []
                     early_stop_g = []
 
                     ### HPP analytical est and max loglikelihood value
@@ -627,55 +605,9 @@ class ELLA:
                     # compute adaptive delta loss (DL) based on homo loglikelihood
                     DL = np.minimum(self.delta_loss_max, np.maximum(maxll/self.delta_loss_adjust, self.delta_loss_min))
                     
-                    ## HPP fit (analytical or numerical)
-                    if self.hpp_solution == 'analytical':
-                        # save numerical HPP (null) solutions
-                        B_est_t[ig, -1] = hatB
-                        mll_est_t[ig, -1] = maxll
-                    else:
-                        # Adam analytical HPP (null) solutions
-                        model = model_null(init_B_null)
-                        # spesify optimizer
-                        if (self.optimizer == 'adam'):
-                            optimizer = optim.Adam(model.parameters(), lr=LR)
-                        else:
-                            print('should use Adam for max likelihood for HPP')
-                        # training
-                        loss_prev = math.inf
-                        counter = 0
-                        es = self.max_iter # early-stop iteration (set once; overwritten on break)
-                        for step in range(0, self.max_iter):
-                            optimizer.zero_grad()
-                            predictions = model(r, c0, n, self.ri_clamp_min, self.ri_clamp_max)
-                            loss = loss_ll(predictions)
-                            loss_hpp_g.append(loss.detach().numpy())
-
-                            # early stopping
-                            if step > self.min_iter:
-                            #if step > 1:
-                                if np.abs(loss_prev - loss.item()) < DL:
-                                    counter = counter + 1
-                                else:
-                                    counter = 0
-                                if counter > self.niter_loss_unchange:
-                                    es = step
-                                    break
-                                loss_prev = loss.item()
-
-                            # stop if loss become nan
-                            if torch.isnan(loss):
-                                es = step
-                                break
-
-                            loss.backward()
-                            optimizer.step()
-
-                        # save numerical HPP (null) results; recompute the loss at the final
-                        # params so mll matches the parameters after the last optimizer step
-                        with torch.no_grad():
-                            final_loss = loss_ll(model(r, c0, n, self.ri_clamp_min, self.ri_clamp_max))
-                        B_est_t[ig, -1] = model.B.data
-                        mll_est_t[ig, -1] = - final_loss
+                    ## HPP (null) fit: analytical closed-form MLE
+                    B_est_t[ig, -1] = hatB
+                    mll_est_t[ig, -1] = maxll
 
                     ## NHPP fit
                     # Adam numerical solution, loop over all kernels
@@ -732,7 +664,6 @@ class ELLA:
                         
                 early_stop_t.append(early_stop_g)
                 loss_nhpp_t.append(loss_nhpp_g)
-                loss_hpp_t.append(loss_hpp_g)
                 adaptive_learning_rate_t.append(LR)
                 adaptive_delta_loss_t.append(DL)
             
@@ -742,7 +673,6 @@ class ELLA:
             self.mll_est[t] = mll_est_t
             self.early_stop_dict[t] = early_stop_t
             self.loss_nhpp_dict[t] = loss_nhpp_t
-            self.loss_hpp_dict[t] = loss_hpp_t
             self.initial_A_dict[t] = initial_A_t
             self.initial_B_dict[t] = initial_B_t
             self.adaptive_learning_rate_dict[t] = adaptive_learning_rate_t
@@ -756,7 +686,6 @@ class ELLA:
         if save != 'less':
             pickle_dict['early_stop'] = self.early_stop_dict
             pickle_dict['loss_nhpp'] = self.loss_nhpp_dict
-            pickle_dict['loss_hpp'] = self.loss_hpp_dict
             pickle_dict['initial_A'] = self.initial_A_dict
             pickle_dict['initial_B'] = self.initial_B_dict
             pickle_dict['adaptive_learning_rate'] = self.adaptive_learning_rate_dict
@@ -791,7 +720,6 @@ class ELLA:
         try:
             self.early_stop_dict = res_dict['early_stop']
             self.loss_nhpp_dict = res_dict['loss_nhpp']
-            self.loss_hpp_dict = res_dict['loss_hpp']
         except:
             pass
 
