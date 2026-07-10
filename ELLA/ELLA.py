@@ -85,7 +85,7 @@ class ELLA:
     '''
     Class of ELLA
     '''
-    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=1e-5, ri_clamp_max=1.0-1e-5, lam_filter=0.0, L1_lam=0):
+    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=0.0, ri_clamp_max=1.0-1e-5, lam_filter=0.0, L1_lam=0):
         '''
         Constructor
         Args:
@@ -102,7 +102,7 @@ class ELLA:
             min_iter: Adam min number of iterations; default=100
             max_ntanbin: DEPRECATED (no longer used by cell registration; kept for API compatibility). Former per-quadrant angular bin count; default=25
             n_angles: for cell registration, number of ray-cast angles for the boundary radius R(phi) over the full circle; supersedes max_ntanbin; default=360
-            ri_clamp_min: relative position truncated at min=ri_clamp_min; default=1e-5
+            ri_clamp_min: relative position truncated at min=ri_clamp_min; default=0.0 (lower clamp dropped; r is already floored at epsilon=1e-10 in nhpp_prepare, so the baseline B*r keeps the log finite)
             ri_clamp_max: relative position truncated at max=ri_clamp_max; default=1-1e-5
             lam_filter: filter out estimated expression intensity lam with max(lam)-min(lam) <= lam_filter; default=0.0
             L1_lam: weight of L1 penalty on the scale parameter in nhpp model kernel fitting; default=0
