@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ELLA"
+version = "1.0.0"
+description = "ELLA v1: subcellular RNA localization via an over-dispersed nonhomogeneous Poisson model with a bounded-Newton alternative fit."
+readme = "README.md"
+requires-python = ">=3.9"
+# Newton-era stack. The Adam->Newton port removed torch; FDR moved from R/rpy2 to
+# scipy.stats.false_discovery_control, so neither torch nor rpy2 is a dependency.
+# alphashape is used to build cell polygons from raster masks (see tutorials/).
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+    "tqdm",
+    "alphashape",
+]
+
+[tool.setuptools.packages.find]
+include = ["ELLA*"]

@@ -4,38 +4,46 @@
 Check out the [tutorial pages](https://jadexq.github.io/ELLA/) for demos and documentations to get started with ELLA.
 
 ## Quick Installation
+
+Requires Python ≥ 3.9. All dependencies are declared in `pyproject.toml` and
+installed automatically.
+
+Install directly from GitHub:
+```
+pip install "git+https://github.com/jadexq/ELLA.git@ella1"
+```
+
+Or from a local clone (use `-e` for an editable/development install):
 ```
 git clone https://github.com/jadexq/ELLA.git
-pip install -r requirements.txt
-pip install -e .
+cd ELLA
+git checkout ella1
+pip install .        # or: pip install -e .
 ```
-Please check out [installation](https://jadexq.github.io/ELLA/install.html) for details.
+
+Then:
+```python
+from ELLA import ELLA
+```
 
 ## Repo Structure
 ```
 ./ELLA/
-├── setup.py % project config
-├── requirements.txt % dependencies
+├── pyproject.toml % project config & dependencies
 ├── ELLA % ELLA source code
-│   └── ELLA.py
+│   ├── __init__.py
+│   └── ELLA.py
 ├── docs % source code of the tutorial website
-│   ├── ...
-├── scripts
-│   ├── demo % code and data for the minimum and complete demos
-│   │   ├── mini_demo
-│   │   └── complete_demo
-│   ├── analysis % mRNA characteristic analysis code for each dataset
-│   |   ├── merfish1
-│   |   ├── seqfish
-│   |   ├── seqscope
-│   |   └── stereoseq
-│   └── preprocessing % data preprocessing code for each data set
-│       ├── merfish1
-│       ├── seqfish
-│       ├── seqscope
-│       └── stereoseq
+│   └── ...
+├── tutorials % code and data for the minimum and complete demos
+│   ├── mini_demo
+│   └── complete_demo
+├── archive % legacy code from the original ELLA release
+│   ├── issues
+│   └── scripts
+│       ├── analysis % mRNA characteristic analysis code
+│       └── preprocessing % data preprocessing code
 └── README.md
-
 ```
 
 ## Processed Data
