@@ -7,8 +7,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.colors as colors
-import torch
-from torch import nn, optim
 import math
 from math import pi
 from scipy import stats
@@ -18,7 +16,6 @@ from rpy2.robjects.vectors import FloatVector
 stats2 = importr('stats')
 from sklearn.neighbors import KernelDensity
 import ipdb # ipdb.set_trace()
-import torch.nn.functional as F
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 from sklearn.cluster import KMeans
@@ -26,31 +23,108 @@ from scipy.spatial.distance import cdist
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
-class model_beta(torch.nn.Module):
-    '''
-    NHPP torch model, log likelihood of alternative models with beta kernels
-    '''
-    def __init__(self, init_A, init_B):
-        super().__init__()
-        self.A = torch.nn.Parameter(torch.rand(())+init_A)
-        self.B = torch.nn.Parameter(torch.rand(())+init_B)
-
-    def forward(self, ri, c0i, ni, a, b, ri_clamp_min, ri_clamp_max, L1_lam):
-        '''
-        location-wise log-likelihood (across locations of all cells)
-        '''
-        BB = math.gamma(a[0])*math.gamma(b[0]) / math.gamma(a[0]+b[0])
-        ri_clamp = torch.clamp(ri, min=ri_clamp_min, max=ri_clamp_max)
-        lli = torch.log(c0i*2.0*math.pi) + torch.log((torch.exp(self.A)/BB)*torch.pow(ri_clamp,a)*torch.pow(1-ri_clamp,b-1) + torch.exp(self.B)*ri_clamp) - (c0i*2.0*math.pi/ni)*((torch.exp(self.A)*a)/(a+b)+(torch.exp(self.B))/(2.0)) - L1_lam*torch.exp(self.A) # constrain A=exp(A)， B=exp(B)
-        return lli
+# ------------------------------------------------------------------ Newton fit
+# Bounded Newton solver for the NHPP alternative model lambda(r) = B + A*kernel(r)
+# (A, B >= 0), solved directly in the model parameters. The per-location
+# log-likelihood is concave in (A, B), so this has a unique global optimum; the
+# solver is deterministic and vectorized over all beta kernels. It replaced the
+# per-kernel Adam-over-(logA, logB) fit (non-deterministic, log-space, early
+# stopped). See the validated prototype tmp_ella1_eval/improve/newton_fit.py and
+# improve/bounded_newton_plan.md.
+FLOOR = 1e-12  # lower bound on A, B (kept strictly positive so log/1-over stay finite)
 
 
-def loss_ll(pred):
-    '''
-    NHPP torch model, negative log likelihood as loss, for minimazing
-    '''
-    loss = - torch.sum(pred)
-    return loss
+def _kernel_matrix(r_clamp, kernels):
+    '''K[:,j] = r^a_j (1-r)^(b_j-1) / Beta(a_j,b_j)  (the multiplier of A).'''
+    m = r_clamp.shape[0]; nk = len(kernels)
+    K = np.empty((m, nk))
+    for j, (a, b) in enumerate(kernels):
+        BB = math.gamma(a) * math.gamma(b) / math.gamma(a + b)
+        K[:, j] = np.power(r_clamp, a) * np.power(1.0 - r_clamp, b - 1.0) / BB
+    return K
+
+
+def newton_fit_gene(r_g, c0_g, n_g, hatB, kernels, L1_lam,
+                    ri_clamp_min, ri_clamp_max, max_iter=100, ftol=1e-12):
+    '''Bounded Newton in the model params (A,B) of lambda=B+A*kernel, A,B>=0.
+    Two-metric (active-set) projected Newton: pin a variable at its lower bound
+    when the gradient points outward, take the Newton step on the free subspace
+    only, backtrack with projection + Armijo, fall back to projected-gradient
+    ascent if the Newton step stalls. Converge on the objective gain. Vectorized
+    over the nk kernels. Returns per-kernel A, B (model scale), mll, niter,
+    converged. mll includes the sum log(c0*2pi) constant + the -n_loc*L1*A term,
+    matching the old Adam mll (= -final_loss). Warm-started at the null
+    (A=FLOOR, B=hatB) so T = 2(mll_alt - mll_null) >= 0 for every kernel.'''
+    r_g = np.asarray(r_g, float); c0_g = np.asarray(c0_g, float); n_g = np.asarray(n_g, float)
+    m = r_g.shape[0]
+    r_c = np.clip(r_g, ri_clamp_min, ri_clamp_max)
+    w = r_c[:, None]                                        # (m,1) baseline basis
+    K = _kernel_matrix(r_c, kernels)                        # (m,nk) kernel basis
+    C = np.sum(c0_g * 2.0 * math.pi / n_g)                  # scalar
+    P_A = C * np.array([a / (a + b) for a, b in kernels]) + m * L1_lam   # (nk,)
+    P_B = C / 2.0                                           # scalar
+    const = np.sum(np.log(c0_g * 2.0 * math.pi))           # additive const for mll
+    nk = len(kernels)
+    atbound = FLOOR * (1.0 + 1e-9)
+
+    def gval(A, B):                                         # objective (no const)
+        S = A[None, :] * K + B[None, :] * w
+        return np.sum(np.log(S), axis=0) - P_A * A - P_B * B
+
+    A = np.full(nk, FLOOR); B = np.full(nk, float(hatB))    # warm start = null
+    niter = np.zeros(nk, int); converged = np.zeros(nk, bool)
+    for it in range(max_iter):
+        g0 = gval(A, B)                                     # objective before step
+        S = A[None, :] * K + B[None, :] * w
+        invS = 1.0 / S; invS2 = invS * invS
+        gA = np.sum(K * invS, axis=0) - P_A
+        gB = np.sum(w * invS, axis=0) - P_B
+        # a var pinned at its bound with outward gradient is not free (active set)
+        free_A = (A > atbound) | (gA > 0.0)
+        free_B = (B > atbound) | (gB > 0.0)
+        pgA = np.where(free_A, gA, 0.0); pgB = np.where(free_B, gB, 0.0)
+
+        Maa = np.sum(K * K * invS2, axis=0)                 # M = -Hessian (PD)
+        Mbb = np.sum(w * w * invS2, axis=0)
+        Mab = np.sum(K * w * invS2, axis=0)
+        # two-metric free-subspace Newton direction
+        both = free_A & free_B; onlyA = free_A & ~free_B; onlyB = ~free_A & free_B
+        det = np.where(both, Maa * Mbb - Mab * Mab, 1.0)
+        det = np.where(np.abs(det) < 1e-300, 1e-300, det)
+        dA = np.where(both, (Mbb * gA - Mab * gB) / det,
+                      np.where(onlyA, gA / np.maximum(Maa, 1e-300), 0.0))
+        dB = np.where(both, (Maa * gB - Mab * gA) / det,
+                      np.where(onlyB, gB / np.maximum(Mbb, 1e-300), 0.0))
+
+        for attempt in ('newton', 'grad'):
+            if attempt == 'grad':                            # fallback: projected gradient
+                dA = pgA.copy(); dB = pgB.copy()
+            t = np.ones(nk); accept = converged.copy()
+            An = A.copy(); Bn = B.copy()
+            for _bt in range(80):
+                need = ~accept
+                if not np.any(need):
+                    break
+                Ap = np.maximum(A + t * dA, FLOOR)
+                Bp = np.maximum(B + t * dB, FLOOR)
+                gp = gval(Ap, Bp)
+                ok = gp >= g0 + 1e-4 * (gA * (Ap - A) + gB * (Bp - B))
+                take = need & ok
+                An[take] = Ap[take]; Bn[take] = Bp[take]; accept[take] = True
+                t[need & ~ok] *= 0.5
+            if np.all(accept):
+                break
+
+        g1 = gval(An, Bn)                                    # monotone: g1 >= g0
+        newly = (~converged) & (g1 - g0 <= ftol * (1.0 + np.abs(g1)))
+        niter[~converged] = it + 1
+        converged |= newly
+        A, B = An, Bn
+        if np.all(converged):
+            break
+
+    mll = const + gval(A, B)
+    return A, B, mll, niter, converged
 
 
 def polygon_boundary_radius(poly_x, poly_y, cx, cy, angles):
@@ -85,21 +159,14 @@ class ELLA:
     '''
     Class of ELLA
     '''
-    def __init__(self, dataset='untitled', beta_kernel_param_list=None, adam_learning_rate_max=1e-2, adam_learning_rate_min=1e-3, adam_learning_rate_adjust=1e7, adam_delta_loss_max=1e-2, adam_delta_loss_min=1e-5, adam_delta_loss_adjust=1e8, adam_niter_loss_unchange=20, max_iter=5000, min_iter=100, max_ntanbin=25, n_angles=360, ri_clamp_min=0.0, ri_clamp_max=1.0-1e-5, lam_filter=0.0, L1_lam=0):
+    def __init__(self, dataset='untitled', beta_kernel_param_list=None, newton_max_iter=100, newton_ftol=1e-12, max_ntanbin=25, n_angles=360, ri_clamp_min=0.0, ri_clamp_max=1.0-1e-5, lam_filter=0.0, L1_lam=0):
         '''
         Constructor
         Args:
             dateset: name of the data working on, default='untitled'
             beta_kernel_param_list: the list of beta kernels, will be specified later; default= the 22 kernels
-            adam_learning_rate_max: max Adam initial learning rate; default=1e-2
-            adam_learning_rate_min: min Adam initial learning rate; default=1e-3
-            adam_learning_rate_adjust: initial Adam learning rate = maxll/adam_learning_rate_adjust, truncated at [adam_learning_rate_min, adam_learning_rate_max], maxll is the analytical hpp loglikelihood value; default=1e7
-            adam_delta_loss_max: for Adam early stopping, max delta loss function; default=1e-2
-            adam_delta_loss_min: for Adam early stopping, min delta loss function; default=1e-5
-            adam_delta_loss_adjust: for Adam early stopping, delta loss = maxll/adam_delta_loss_adjust, truncated at [adam_delta_loss_min, adam_delta_loss_max], maxll is the analytical hpp loglikelihood value; default=1e8
-            adam_niter_loss_unchange: for Adam early stopping, Adam stops if loss decrease < delta loss for adam_niter_loss_unchange iterations; default=20
-            max_iter: Adam max number of iterations; default=5000
-            min_iter: Adam min number of iterations; default=100
+            newton_max_iter: max iterations for the bounded-Newton alternative fit; default=100 (converges in ~3-11)
+            newton_ftol: relative objective-gain tolerance for Newton convergence; default=1e-12
             max_ntanbin: DEPRECATED (no longer used by cell registration; kept for API compatibility). Former per-quadrant angular bin count; default=25
             n_angles: for cell registration, number of ray-cast angles for the boundary radius R(phi) over the full circle; supersedes max_ntanbin; default=360
             ri_clamp_min: relative position truncated at min=ri_clamp_min; default=0.0 (lower clamp dropped; r is already floored at epsilon=1e-10 in nhpp_prepare, so the baseline B*r keeps the log finite)
@@ -164,27 +231,11 @@ class ELLA:
         self.kmeans_n_sig = None
         self.labels_dict = {} # pattern cluster labels
 
-        # NHPP fit constants
-        self.optimizer = 'adam' 
-        self.learning_rate_max = adam_learning_rate_max
-        self.learning_rate_min = adam_learning_rate_min
-        self.learning_rate_adjust = adam_learning_rate_adjust
-        self.max_iter = max_iter 
-        self.min_iter = min_iter 
-        self.delta_loss_max = adam_delta_loss_max
-        self.delta_loss_min = adam_delta_loss_min
-        self.delta_loss_adjust = adam_delta_loss_adjust
-        self.niter_loss_unchange = adam_niter_loss_unchange
+        # NHPP fit constants (bounded-Newton alternative fit)
+        self.newton_max_iter = newton_max_iter
+        self.newton_ftol = newton_ftol
         self.L1_lam = L1_lam
-        
-        # NHPP intermediate results
-        self.initial_A_dict = {} # Adam A (beta in manuscript) initial value
-        self.initial_B_dict = {} # Adam B (alpha in manuscript) initial value
-        self.loss_nhpp_dict = {} # save nhpp loss function values for plotting and covergence check
-        self.early_stop_dict = {} # save if Adam stops early
-        self.adaptive_learning_rate_dict = {} # save Adam adaptive learning rate
-        self.adaptive_delta_loss_dict = {} # save Adam adaptive delta loss
-        
+
         if beta_kernel_param_list is None:
             self.beta_kernel_param_list = [ # the default 22 kernels
                 [1,     2.71],   
@@ -555,13 +606,6 @@ class ELLA:
             n_t = self.n_tl[t]
             n_t_homo = self.n_tl_homo[t]
 
-            initial_A_t = []
-            initial_B_t = []
-            loss_nhpp_t = []
-            early_stop_t = []
-            adaptive_learning_rate_t = []
-            adaptive_delta_loss_t = []
-
             _gl = self.gene_list_dict[t][:self.ng_demo_dict[t]]
             for _ig, g in enumerate(tqdm(_gl, desc=f'NHPP fitting for {t}')):
                 ig = int(_ig + ig_start)
@@ -575,9 +619,6 @@ class ELLA:
                 n_g_homo = np.array(n_t_homo[ig])
 
                 if (len(r_g)>0):
-                    loss_nhpp_g = []
-                    early_stop_g = []
-
                     ### HPP analytical est and max loglikelihood value
                     # \sum_i=1^I Ji / 1/2 \sum_i=1^I c0i *(2pi)
                     hatB = np.sum(n_g_homo)/np.sum(c0_g_homo*math.pi) # B (alpha) est
@@ -586,109 +627,33 @@ class ELLA:
                     # exact MLE: clamping r only shifts the constant log-r term, not the B term)
                     r_g_clamp = np.clip(np.array(r_g), self.ri_clamp_min, self.ri_clamp_max)
                     maxll = np.sum(np.log(np.array(c0_g)*2.0*math.pi)+np.log(hatB*r_g_clamp)-(np.array(c0_g)*2.0*math.pi/np.array(n_g))*(hatB/2.0)) # HPP loglikelihood
-                    
-                    ### MLE of (N)HPP
-                    # Adam initial values
-                    init_A = -10
-                    init_B_null = hatB
-                    init_B_alter = np.log(np.maximum(hatB, 1e-7))
-                    initial_A_t.append(init_A)
-                    initial_B_t.append(init_B_null)
-                    
-                    # prepare data for torch
-                    r = torch.reshape(torch.Tensor(r_g), (len(r_g),1))
-                    c0 = torch.reshape(torch.Tensor(c0_g), (len(r_g),1))
-                    n = torch.reshape(torch.Tensor(n_g), (len(r_g),1))
-                    
-                    # compute adaptive learning rate (LR) based on homo loglikelihood
-                    LR = np.minimum(self.learning_rate_max, np.maximum(maxll/self.learning_rate_adjust, self.learning_rate_min))
-                    # compute adaptive delta loss (DL) based on homo loglikelihood
-                    DL = np.minimum(self.delta_loss_max, np.maximum(maxll/self.delta_loss_adjust, self.delta_loss_min))
-                    
+
                     ## HPP (null) fit: analytical closed-form MLE
                     B_est_t[ig, -1] = hatB
                     mll_est_t[ig, -1] = maxll
 
-                    ## NHPP fit
-                    # Adam numerical solution, loop over all kernels
-                    for k in range(self.nk):
-                        # beta kernel shape parameters
-                        aa = torch.reshape(torch.Tensor([self.beta_kernel_param_list[k][0]]*len(r_g)), (len(r_g),1))
-                        bb = torch.reshape(torch.Tensor([self.beta_kernel_param_list[k][1]]*len(r_g)), (len(r_g),1))
+                    ## NHPP (alternative) fit: bounded Newton in the model params (A,B) of
+                    ## lambda=B+A*kernel, A,B>=0 (concave => global optimum, deterministic),
+                    ## warm-started at the null so T=2(mll_alt-mll_null)>=0. Vectorized over kernels.
+                    A_m, B_m, mll_k, _niter, _conv = newton_fit_gene(
+                        r_g, c0_g, n_g, hatB, self.beta_kernel_param_list, self.L1_lam,
+                        self.ri_clamp_min, self.ri_clamp_max, self.newton_max_iter, self.newton_ftol)
+                    # store A, B in LOG scale: weighted_density_est() exps A_est/B_est, matching
+                    # the old Adam parameters which were themselves log A / log B.
+                    A_est_t[ig, :self.nk] = np.log(np.maximum(A_m, FLOOR))
+                    B_est_t[ig, :self.nk] = np.log(np.maximum(B_m, FLOOR))
+                    mll_est_t[ig, :self.nk] = mll_k
 
-                        # torch model
-                        model = model_beta(init_A, init_B_alter)
-                        # spesify optimizer
-                        if (self.optimizer == 'adam'):
-                            optimizer = optim.Adam(model.parameters(), lr=LR)
-                        else:
-                            print('should use adam for max likelihood')
-                        # training
-                        loss_prev = math.inf
-                        counter = 0
-                        es = self.max_iter # early-stop iteration (set once; overwritten on break)
-                        loss_k = [] # save loss values across iterations for diagnostic plotting
-                        for step in range(0, self.max_iter):
-                            optimizer.zero_grad()
-                            predictions = model(r, c0, n, aa, bb, self.ri_clamp_min, self.ri_clamp_max, self.L1_lam)
-                            loss = loss_ll(predictions)
-                            loss_k.append(loss.detach().numpy())
-
-                            # early stopping
-                            if np.abs(loss_prev - loss.item()) < DL:
-                                counter = counter + 1
-                            else:
-                                counter = 0
-                            if counter > self.niter_loss_unchange:
-                                es = step
-                                break
-                            loss_prev = loss.item()
-
-                            # stop if loss become nan
-                            if torch.isnan(loss):
-                                es = step
-                                break
-
-                            loss.backward()
-                            optimizer.step()
-
-                        # save results; recompute the loss at the final params so mll matches
-                        # the parameters after the last optimizer step
-                        with torch.no_grad():
-                            final_loss = loss_ll(model(r, c0, n, aa, bb, self.ri_clamp_min, self.ri_clamp_max, self.L1_lam))
-                        A_est_t[ig, k] = model.A.data
-                        B_est_t[ig, k] = model.B.data
-                        mll_est_t[ig, k] = - final_loss
-                        early_stop_g.append(es)
-                        loss_nhpp_g.append(loss_k)
-                        
-                early_stop_t.append(early_stop_g)
-                loss_nhpp_t.append(loss_nhpp_g)
-                adaptive_learning_rate_t.append(LR)
-                adaptive_delta_loss_t.append(DL)
-            
             # add to dict
             self.A_est[t] = A_est_t
             self.B_est[t] = B_est_t
             self.mll_est[t] = mll_est_t
-            self.early_stop_dict[t] = early_stop_t
-            self.loss_nhpp_dict[t] = loss_nhpp_t
-            self.initial_A_dict[t] = initial_A_t
-            self.initial_B_dict[t] = initial_B_t
-            self.adaptive_learning_rate_dict[t] = adaptive_learning_rate_t
-            self.adaptive_delta_loss_dict[t] = adaptive_delta_loss_t
 
         # save A_est (beta in paper), B_est (alpha in paper), and mll_est
         pickle_dict = {}
         pickle_dict['A_est'] = self.A_est
         pickle_dict['B_est'] = self.B_est
         pickle_dict['mll_est'] = self.mll_est
-        if save != 'less':
-            pickle_dict['early_stop'] = self.early_stop_dict
-            pickle_dict['loss_nhpp'] = self.loss_nhpp_dict
-            pickle_dict['initial_A'] = self.initial_A_dict
-            pickle_dict['initial_B'] = self.initial_B_dict
-            pickle_dict['adaptive_learning_rate'] = self.adaptive_learning_rate_dict
 
         output_dir = 'output'
         outfile = 'output/nhpp_fit_results.pkl'
@@ -717,11 +682,6 @@ class ELLA:
         self.A_est = res_dict['A_est']
         self.B_est = res_dict['B_est']
         self.mll_est = res_dict['mll_est']
-        try:
-            self.early_stop_dict = res_dict['early_stop']
-            self.loss_nhpp_dict = res_dict['loss_nhpp']
-        except:
-            pass
 
 
     def weighted_density_est(self, idx_selected_kernels=None, ng_demo=None):
