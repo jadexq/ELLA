@@ -1,6 +1,5 @@
 import os
 import pickle
-import timeit
 import random
 import numpy as np
 import pandas as pd
@@ -11,12 +10,7 @@ import math
 from math import pi
 from scipy import stats
 from scipy.stats import beta
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import FloatVector
-stats2 = importr('stats')
 from sklearn.neighbors import KernelDensity
-import ipdb # ipdb.set_trace()
-from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import cdist
@@ -738,14 +732,22 @@ class ELLA:
             # find the mode of weighted A*varphi+B
             scores_t = np.zeros(self.ng_demo_dict[t])
             weighted_lam_est_t = []
-            x = np.linspace(0.001,0.999,100)
+            # the 22 beta.pdf curves are gene-independent -> build the (nk, 100)
+            # matrix once and reuse it across every gene this instance scores.
+            key = tuple(idx_selected_kernels)
+            if getattr(self, '_pdf_cache_key', None) != key:
+                x_grid = np.linspace(0.001,0.999,100)
+                self._pdf_cache = np.stack([beta.pdf(x_grid, *self.beta_kernel_param_list[k])
+                                            for k in idx_selected_kernels])  # (nk, 100)
+                self._pdf_cache_x = x_grid
+                self._pdf_cache_key = key
+            x = self._pdf_cache_x
             for ig in range(self.ng_demo_dict[t]):
                 weighted_lam_est_g = np.zeros(100)
-                for ik, k in enumerate(idx_selected_kernels):
-                    a, b = self.beta_kernel_param_list[k]
+                for ik in range(len(idx_selected_kernels)):
                     A_k = A_t[ig,ik]
                     B_k = B_t[ig,ik]
-                    lam_k = np.maximum(0, A_k*beta.pdf(x, a, b)+B_k) # ensure non-negative
+                    lam_k = np.maximum(0, A_k*self._pdf_cache[ik]+B_k) # ensure non-negative
                     weighted_lam_est_g = weighted_lam_est_g + weight_ml_t[ig,ik]*lam_k
                 idx = np.argmax(weighted_lam_est_g)
                 scores_t[ig] = x[idx]
@@ -797,17 +799,20 @@ class ELLA:
             min_t = np.nanmin(self.mll_est[t])
             mll_est_t = np.nan_to_num(self.mll_est[t], nan=min_t) # replace nan with minimum value
             
-            for ig in range(self.ng_demo_dict[t]):
-                for ik in range(len(idx_selected_kernels)):
-                    idx_k = idx_selected_kernels[ik]
-                    T = -2*(mll_est_t[ig,-1] - mll_est_t[ig,idx_k])
-                    cutoff0 = 0 
-                    if T<=cutoff0 or np.isnan(T):
-                        p = 1 - np.random.uniform(low=0.0, high=0.5, size=1)
-                    else:
-                        p = 1 - 0.5 - 0.5*stats.chi2.cdf(T, 1)
-                    pv_t[ig,ik] = p
-                    ts_t[ig,ik] = T
+            # vectorized over (gene x kernel); equivalent to the former ig/ik loop.
+            cutoff0 = 0
+            idx_k = np.asarray(idx_selected_kernels)
+            T_mat = -2.0 * (mll_est_t[:, -1][:, None] - mll_est_t[:, idx_k])  # (ng, nk)
+            boundary = (T_mat <= cutoff0) | np.isnan(T_mat)
+            pv_mat = 0.5 - 0.5 * stats.chi2.cdf(np.where(boundary, 0.0, T_mat), 1)
+            n_b = int(boundary.sum())
+            if n_b:
+                # a single batched draw == n_b sequential size=1 draws under MT19937,
+                # and pv_mat[boundary] fills row-major (ig outer, ik inner) -> same
+                # RNG sequence & assignment order as the original nested loop. [BI]
+                pv_mat[boundary] = 1.0 - np.random.uniform(low=0.0, high=0.5, size=n_b)
+            pv_t[:] = pv_mat
+            ts_t[:] = T_mat
 
             # cauchy combination
             pv_cauchy_t = []
@@ -820,8 +825,9 @@ class ELLA:
                 pc = 0.5 - np.arctan(tt)/pi
                 pv_cauchy_t.append(pc)
 
-            # FDR BY
-            pv_fdr_t = np.array(stats2.p_adjust(FloatVector(pv_cauchy_t[:self.ng_dict[t]]), method = 'BY'))
+            # FDR BY (scipy replacement for R's stats::p.adjust(method='BY'))
+            pv_fdr_t = stats.false_discovery_control(
+                np.asarray(pv_cauchy_t[:self.ng_dict[t]], dtype=float), method='by')
             
             # update FDR pv based on lam est
             lam_t = self.weighted_lam_est[t]
