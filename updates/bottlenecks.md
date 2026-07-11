@@ -1,67 +1,107 @@
-# ELLA v1 speed bottlenecks
+# ELLA v1 speed bottlenecks (Newton-era)
 
-Anchor: mini-demo baseline (`output/baseline`, 4 genes x 5 cells, CPU, 1 process)
-= 36.6s total, `nhpp_fit` = 35.6s (97%). Everything below is about `nhpp_fit`,
-whose work scales as `genes x 23 fits x iters(<=max_iter) x O(N)` (N = pooled UMI
-per gene; 23 = 1 null + 22 beta kernels).
+**Status of this file.** Rewritten after the Adam->Newton port of the alternative
+fit landed (see `ELLA/ELLA.py` `newton_fit_gene`, and git history on the `ella1`
+branch for the removed Adam machinery). The previous version of this file ranked
+the *Adam-era* `nhpp_fit` as ~97% of runtime; that is no longer true. The old
+anchor profile (`updates/output/baseline/`, mini demo) was deleted, so the ranking
+below is **structural** (from code complexity + where the per-transcript / per-cell
+work lives), **not** a fresh measured profile. Capture a Newton-era profile on a
+real-sized dataset (compute node, `ella1` env) before trusting the ordering for a
+specific panel — see "Profiling TODO".
 
-Ranked by expected speedup on a real many-gene panel (the benchmark use case). At
-the demo scale actually measured, item 3 dominates the 35.6s; items 1-2 dominate
-once genes/transcripts grow.
+## What changed (why the old ranking is dead)
+
+`nhpp_fit` (`:574`) no longer does 23 sequential Adam optimizations per gene. It now
+does: (a) the **analytical closed-form null** (`hatB`, `maxll`, `:623-632`), and (b)
+one **bounded-Newton** call `newton_fit_gene` (`:637`) that is **vectorized over all
+22 beta kernels** and converges in ~3-11 numpy iterations. No torch, no per-kernel
+loop, no early-stop `.item()` sync, no loss history. So the whole former hot path
+(old items 2-5) is gone, and the cost has shifted to what the old file called
+"secondary" work: data prep, registration, and the p-value assembly.
+
+**Resolved by the port (kept for context, do not re-list as bottlenecks):**
+- 23 sequential Adam fits / kernel-batching  -> one vectorized Newton call.
+- Per-iteration `.item()` / CPU-sync / loss-history overhead  -> gone (numpy).
+- Constant work redone in `model_beta.forward`  -> `newton_fit_gene` precomputes
+  the kernel matrix `K`, baseline `w`, and penalties once (`:61-65`).
+- `hpp_solution='numerical'` Adam-fitting the null  -> null is analytical (`:631`).
+- "No parallelism at all"  -> **now provided externally** by `bridge/ella1.py`
+  (gene-sharded `ProcessPoolExecutor`, per-gene seeding `seed_base + g`). `ELLA.py`
+  itself is still serial, and its `ProcessPoolExecutor` import (`:19`) is dead.
+
+## Conventions
 
 Tags: `[BI]` bit-identical, `[BC]` behavior-changing. Behavior-preservation is a
-hard constraint. Two RNG touch points make naive batching/parallel reordering
-non-identical: `torch.rand` in every model `__init__` (`ELLA/ELLA.py:35-36,54`)
-and `np.random.uniform` in `compute_pv` (`:928`).
+hard constraint (the bridge shards genes and seeds per gene, expecting identical
+per-gene output regardless of sharding).
 
-v1 has no per-transcript / per-bin Python loop (its forward is already
-vectorized), so v2's two biggest wins do not apply; v1 also has no Lightning and
-no built-in parallelism.
+RNG touch points in the Newton era (only one is in the fit path):
+- `np.random.uniform` in `compute_pv` (`:803`) -- the `T <= 0` boundary atom, drawn
+  per (gene, kernel). Seeded per gene by the bridge (`np.random.seed`,
+  `bridge/ella1.py:211`). **This is the only RNG that affects results.**
+- `bridge/ella1.py:212` still calls `torch.manual_seed` -- **vestigial** now
+  (Newton has no torch RNG); it seeds nothing in the fit.
+- `:908 random.seed(2024)` (kmeans) and `:1116 np.random.uniform` (plot jitter) are
+  outside the fit/pv path.
 
-## 1. No parallelism at all  `[BI with per-gene seeding]`
-`:22` imports `ProcessPoolExecutor`, unused. Gene loop (`:609`) and kernel loop
-(`:697`) are both serial; no SLURM/gene-split script (v2 had one). Genes are
-independent, so a process pool over genes scales near-linearly with cores: the
-largest lever for real panels. `nhpp_fit` already exposes `ig_start`/`ng_demo`
-(`:566`) for manual gene-range splitting. Behavior-preserving only if each worker
-is seeded from its gene index (current code shares one global RNG).
+Newton itself is deterministic (no RNG), so parallel/reordered execution of the fit
+is `[BI]` as long as the per-gene `compute_pv` seed is preserved.
 
-## 2. 23 sequential Adam fits per gene  `[BC batched / BI parallel]`
-Null (`:649-693`) + 22 kernels (`:697-743`), all serial, all on identical data,
-differing only in scalar `(a,b)`. Largest single-process structural multiplier.
-Kernel-batching (one model, `[22]`-shaped params) is the biggest win but `[BC]`
-(stacking reorders the `torch.rand` init draws). Running the 23 fits concurrently
-with fixed per-fit seeds is `[BI]`.
+## Ranked bottlenecks (structural, real-panel)
 
-## 3. Per-iteration Python / CPU-sync overhead  `[BI]`
-Adam loops `:664-689` (null), `:713-736` (kernel). Each iteration pays `.item()`
-twice (`:721,728`) for the early-stop test (CPU sync), `.detach().numpy()`
-appended to a loss history (`:717,668`) that is kept in memory even under
-`save='less'`, and `torch.isnan`. At demo scale (tiny N) this overhead, not the
-math, is the 35.6s. Fix: one `.item()` per iter, skip the unused loss history
-when `save='less'`.
+### 1. `nhpp_prepare` is quadratic in transcripts-per-cell  `[BI]`
+`:449-495`. Triple-nested Python loop (type -> gene -> cell -> transcript) that grows
+Python lists with `+`: `r_c = r_c + [rj]*umi` (`:479`) inside the per-transcript
+loop, then `r_g = r_g + r_c`, `n_g = n_g + n_c`, `c0_g = c0_g + c0_c` (`:486-488`)
+per cell. List concatenation with `+` is O(len) each time, so building a gene's
+pooled arrays is O(N^2) in its total UMI. With the fit now cheap, this is the most
+likely single largest CPU cost per dataset. Fix: preallocate / `np.repeat(rj, umi)`
++ `np.concatenate` once per gene (or build a flat list and convert once). Pure
+data reshaping -> bit-identical.
 
-## 4. Constant work redone every iteration in `model_beta.forward`  `[BI if op order kept]`
-`:38-45`. Per iteration recomputes quantities that depend only on data+kernel, not
-the trainable params: `BB` (3 `gamma` calls, `:42`), `clamp` (`:43`), two
-`torch.pow` N-vectors and `log(c0i*2pi)` (`:44`). Only `exp(A)`, `exp(B)` change.
-Precompute them once per fit. Leverage grows with N; small on the demo.
+### 2. `register_cells` per-cell pandas, no parallelism  `[BI / parallelizable]`
+`:349-389`. Serial loop over cells; each does `df_gbC.get_group(c).copy()` and
+per-cell column math. Now ray-cast (`polygon_boundary_radius` + `searchsorted`,
+`:362-371`), correct but still one pandas group per cell. Runs once per dataset in
+each bridge worker. Fix: vectorize across cells, or parallelize (the bridge only
+parallelizes genes, and registration precedes the gene split). Bit-identical if the
+per-cell math is preserved.
 
-## 5. Config levers  `[BC]`
-- `max_iter` (5000 default / 1000 demo, `:713,664`), full batch each iter; null
-  forced `>= min_iter=100` (`:672`). Sets the iter multiplier on items 3-4.
-- `hpp_solution='numerical'` (`:76`; the docstring's 'analytical' is stale)
-  Adam-fits the null though an exact closed form exists (`:627-628,649-652`).
-  Switching removes 1 of 23 fits and is arguably more exact.
+### 3. `compute_pv` scalar double-loop over (gene x kernel)  `[BI if RNG order kept]`
+`:797-807`. `for ig: for ik:` computes `T = -2*(mll_null - mll_k)` and
+`scipy.stats.chi2.cdf(T, 1)` one scalar at a time over genes x 22 kernels. Trivially
+vectorizable (matrix `T`, vectorized `chi2.cdf`, `np.where` for the `T<=0` branch).
+Was negligible under Adam; visible now. **Careful:** the `T<=0` branch draws
+`np.random.uniform` per entry (`:803`); a vectorized rewrite must draw for exactly
+the same entries in the same order to stay `[BI]` (otherwise `[BC]`).
 
-## 6. Secondary (non-fit), <3% now, scale later  `[BI]`
-- `weighted_density_est` (`:864-874`): recomputes `beta.pdf(x,a,b)` per gene; the
-  22 curves are constant, precompute once.
-- `register_cells` (`:313-378`): pandas-per-cell, ~0.15s/cell, no parallelism.
-- `nhpp_prepare` (`:441-487`): per-transcript list build + list concat.
+### 4. `weighted_density_est` recomputes constant kernel curves per gene  `[BI]`
+`:739-746`. Inside the per-gene loop, `beta.pdf(x, a, b)` is evaluated for each of
+the 22 kernels on a fixed `x = linspace(0.001, 0.999, 100)` (`:738`). The 22 curves
+are constant across genes -> precompute a `(22, 100)` matrix once, then per gene just
+do the weighted sum. Bit-identical.
+
+### 5. Cleanup (not speed, but dead weight)  `[BI]`
+- Dead imports in `ELLA.py`: `timeit` (`:3`), `ipdb` (`:18`),
+  `ProcessPoolExecutor` (`:19`) -- all unused after the port.
+- Vestigial `torch.manual_seed` in `bridge/ella1.py:212` (and the torch import that
+  exists only to serve it) -- Newton has no torch RNG.
 
 ## Recommended order
-Land 3 + 4 first (bit-identical, validate against `output/baseline`), then add 1
-(gene parallelism with per-gene seeds) for real panels. 2 (kernel-batching) and 5
-change outputs, so adopt only after re-validating. Profile one gene first to
-confirm the 3-vs-4 split before editing.
+
+Land 1 (`nhpp_prepare` O(N^2) -> linear) first: biggest structural lever, and
+bit-identical so it validates against a saved run. Then 3 and 4 (both `[BI]`
+reshapes/precompute). 2 (`register_cells`) is the next real cost but a larger rewrite;
+do it after profiling confirms its share. All of 1-4 are behavior-preserving; none
+touch the fit or the seeded boundary atom.
+
+## Profiling TODO
+
+The old mini-demo anchor was deleted and, at 4 genes x 5 cells, was dominated by
+fixed overhead anyway. Before optimizing, capture a Newton-era stage breakdown
+(`register_cells` / `nhpp_prepare` / `nhpp_fit` / `weighted_density_est` /
+`compute_pv`) on a **real-sized** dataset (e.g. a simulation scaffold panel, 100
+genes x ~116 cells) in the `ella1` env on a compute node, so the ranking above is
+backed by measured shares rather than code structure. Expectation to confirm:
+`nhpp_fit` is now a small fraction and items 1-2 dominate.

@@ -29,8 +29,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 # log-likelihood is concave in (A, B), so this has a unique global optimum; the
 # solver is deterministic and vectorized over all beta kernels. It replaced the
 # per-kernel Adam-over-(logA, logB) fit (non-deterministic, log-space, early
-# stopped). See the validated prototype tmp_ella1_eval/improve/newton_fit.py and
-# improve/bounded_newton_plan.md.
+# stopped).
 FLOOR = 1e-12  # lower bound on A, B (kept strictly positive so log/1-over stay finite)
 
 
@@ -448,21 +447,19 @@ class ELLA:
             n_t_homo = []
 
             for ig, g in enumerate(tqdm(self.gene_list_dict[t], desc=f'Preparing data for {t}')):
-                n_g = []
                 n_g_homo = []
-                c0_g = []
                 c0_g_homo = []
-                r_g = []
+                # per-cell arrays accumulated then concatenated once (avoids O(N^2)
+                # list `+` growth and per-transcript .iloc scalar access)
+                r_g_parts = []
+                n_g_parts = []
+                c0_g_parts = []
 
                 df_t_g = df_t_gbG.get_group(g) # df for gene g in cell type t
                 df_t_g_gbC = df_t_g.groupby('cell', observed=False) # group by cell
                 cell_list_t_g = df_t_g.cell.unique().tolist() # cell list for gene g in cell type t
 
                 for c in cell_list_t_g:
-                    n_c = []
-                    c0_c = []
-                    r_c = []
-
                     df_t_g_c = df_t_g_gbC.get_group(c)
                     ni = df_t_g_c.umi.sum()
                     c0i = df_t_g_c.sc_total.iloc[0]
@@ -474,19 +471,24 @@ class ELLA:
                     # if simulation, can fix ci(=1)
                         c0ik = int(ci_fix)
 
-                    for j in range(len(df_t_g_c)):
-                        umi = df_t_g_c.umi.iloc[j]
-                        rj = max(df_t_g_c.d_c_s.iloc[j], self.epsilon)
-                        r_c = r_c + [rj]*umi
-                    n_c = [ni]*len(r_c)
-                    c0_c = [c0ik]*len(r_c)
+                    # explode each transcript row into `umi` copies of its clamped
+                    # radius: identical to the old `r_c = r_c + [rj]*umi` loop, in
+                    # the same row order (np.repeat preserves order), but vectorized
+                    umi_arr = df_t_g_c.umi.to_numpy()
+                    d_arr = df_t_g_c.d_c_s.to_numpy()
+                    r_c = np.repeat(np.maximum(d_arr, self.epsilon), umi_arr)
+                    L = r_c.shape[0] # == ni (sum of umi over the cell's rows)
                     c0_g_homo.append(c0ik)
-                    n_g_homo.append(len(r_c))
+                    n_g_homo.append(L)
 
                     # concatenate all cells of gene-g
-                    n_g = n_g + n_c
-                    c0_g = c0_g + c0_c
-                    r_g = r_g + r_c
+                    r_g_parts.append(r_c)
+                    n_g_parts.append(np.full(L, ni))
+                    c0_g_parts.append(np.full(L, c0ik))
+
+                r_g = np.concatenate(r_g_parts) if r_g_parts else np.array([])
+                n_g = np.concatenate(n_g_parts) if n_g_parts else np.array([])
+                c0_g = np.concatenate(c0_g_parts) if c0_g_parts else np.array([])
 
                 # append all genes of type t
                 r_t.append(r_g)
