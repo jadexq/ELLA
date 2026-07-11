@@ -2,9 +2,9 @@
 title: MERFISH2
 layout: default
 parent: Reproducibility
+grand_parent: ELLA v1
 nav_order: 5
 ---
-
 ### MERFISH Human Osteosarcoma Data Application
 
 Here's the main code that we used to apply ELLA to the MERFISH human osteosarcoma data.

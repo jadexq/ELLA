@@ -2,13 +2,13 @@
 title: Seq-Scope
 layout: default
 parent: Reproducibility
+grand_parent: ELLA v1
 nav_order: 1
 ---
-
 ### Seq-Scope Mouse Liver Data Application
 
 <div style="margin: 0 auto; text-align: left;"> 
-<img src="{{ site.baseurl }}/images/rp_seqscope.png" width="500" />
+<img src="{{ site.baseurl }}/ella_v1/images/rp_seqscope.png" width="500" />
 </div>
 
 Here's the main code that we used to apply ELLA to the Seq-Scope mouse liver data. We conducted the analysis for each cell type in parallel to save memory consumption and computation time.

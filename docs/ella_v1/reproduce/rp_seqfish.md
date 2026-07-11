@@ -2,13 +2,13 @@
 title: SeqFISH+
 layout: default
 parent: Reproducibility
+grand_parent: ELLA v1
 nav_order: 3
 ---
-
 ### SeqFISH+ Mouse Embryonic Fibroblast Data Application
 
 <div style="margin: 0 auto; text-align: left;"> 
-<img src="{{ site.baseurl }}/images/rp_seqfish.png" width="500" />
+<img src="{{ site.baseurl }}/ella_v1/images/rp_seqfish.png" width="500" />
 </div>
 
 Here's the main code that we used to apply ELLA to the seqFISH+ mouse embryonic fibroblast data.

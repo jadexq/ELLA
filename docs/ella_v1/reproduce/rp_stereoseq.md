@@ -2,13 +2,13 @@
 title: Stereo-seq
 layout: default
 parent: Reproducibility
+grand_parent: ELLA v1
 nav_order: 2
 ---
-
 ### Stereo-seq Mouse Embryo Data Application
 
 <div style="margin: 0 auto; text-align: left;"> 
-<img src="{{ site.baseurl }}/images/rp_stereoseq.png" width="500" />
+<img src="{{ site.baseurl }}/ella_v1/images/rp_stereoseq.png" width="500" />
 </div>
 
 Here's the main code that we used to apply ELLA to the Stereo-seq mouse embryo data. For each cell type, we conducted the analysis for every 100 genes in parallel to significantly save memory consumption and computation time.
