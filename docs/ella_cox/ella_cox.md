@@ -8,7 +8,7 @@ has_toc: false
 ## ELLA-Cox (archived)
 
 Tutorial for the ELLA-Cox variant, based on a Cox-process model. Kept here, frozen,
-for reference; its source lives on the repository's `main` branch.
+for reference; its source lives on the repository's `ella-cox` branch.
 
 - [Home]({{ site.baseurl }}/ella_cox/home.html)
 - [Install ELLA-Cox]({{ site.baseurl }}/ella_cox/install.html)
