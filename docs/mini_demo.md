@@ -16,7 +16,7 @@ Install ELLA follows the steps in [Install ELLA]({{ site.baseurl }}/install.html
 
 The script and data that will be used in this demo should have already been downloaded (while cloning the ELLA repo). You should be able to find these at your local ELLA folder:
 ```
-ELLA/scripts/demo/mini_demo/
+ELLA/tutorials/mini_demo/
 ├── input
 │   └── mini_demo_data.pkl
 ├── output

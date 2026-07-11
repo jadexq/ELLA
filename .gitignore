@@ -2,7 +2,6 @@ _site/
 .sass-cache/
 .jekyll-cache/
 .jekyll-metadata
-lightning_logs/
 
 .bundle/
 vendor/
@@ -10,6 +9,5 @@ vendor/
 .DS_Store
 *.pyc
 __pycache__
+.ipynb_checkpoints/
 *.egg-info
-
-simulated_data.jsonl

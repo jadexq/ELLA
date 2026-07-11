@@ -13,7 +13,7 @@ nav_order: 4
 
 The script and data that will be used in this demo should have already been downloaded (while cloning the ELLA repo). You should be able to find these at your local ELLA folder:
 ```
-ELLA/scripts/demo/complete_demo/
+ELLA/tutorials/complete_demo/
 ├── input
 │   └── complete_demo_data.pkl
 ├── output
