@@ -1,9 +1,7 @@
 ---
 title: MERFISH2
 layout: default
-parent: Reproducibility
-grand_parent: ELLA v1
-nav_order: 5
+nav_exclude: true
 ---
 ### MERFISH Human Osteosarcoma Data Application
 

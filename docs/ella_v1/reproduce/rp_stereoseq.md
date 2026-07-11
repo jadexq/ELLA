@@ -1,9 +1,7 @@
 ---
 title: Stereo-seq
 layout: default
-parent: Reproducibility
-grand_parent: ELLA v1
-nav_order: 2
+nav_exclude: true
 ---
 ### Stereo-seq Mouse Embryo Data Application
 

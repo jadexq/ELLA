@@ -17,10 +17,10 @@ ELLA/tutorials/complete_demo/
 ├── input
 │   └── complete_demo_data.pkl
 ├── output
-│   ├── df_nhpp_prepared_saved.pkl
-│   ├── df_registered_saved.pkl
+│   ├── df_nhpp_prepared.pkl
+│   ├── df_registered.pkl
 │   ├── lam_est.pkl
-│   ├── nhpp_fit_results_saved.pkl
+│   ├── nhpp_fit_results.pkl
 │   └── pv_est.pkl
 └── complete_demo.ipynb
 ```
@@ -28,13 +28,15 @@ ELLA/tutorials/complete_demo/
 The data is a subset of the processed seqFISH+ embryonic fibroblast dataset. 
 The input data (`input/complete_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional) with 20 cells and 50 genes. 
 
-The script of this demo is `complete_demo.ipynb`, you should be able to run it locally by yourself (run time around 3min), expecting the following steps and outputs:
+The script of this demo is `complete_demo.ipynb`, you should be able to run it locally by yourself (run time around 3min), expecting the following steps and outputs.
+
+The alternative NHPP fit uses a bounded-Newton solver (deterministic, finds the global optimum); there are no `adam_*` or `max_iter` arguments.
 
 1. Initiating ELLA:
 ```python
 # import ELLA
-from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
-ella_demo = ELLA(dataset='demo2')
+from ELLA.ELLA import ELLA
+ella_demo = ELLA(dataset='demo')
 # load data
 ella_demo.load_data(data_path='input/complete_demo_data.pkl')
 ```
@@ -47,14 +49,10 @@ ella_demo.nhpp_prepare()
 # model fitting
 ella_demo.nhpp_fit()
 ```
-As this could take a couple of minutes, to save time,  let's **instead** use the saved results in the `output` folder. ELLA can easily load saved results with:
+The bounded-Newton fit is fast (this 50-gene / 20-cell demo fits in ~1-2 s), so we just fit live above. For large panels you can instead save the fit and reload it later with:
 ```python
-# load registered cells
-ella_demo.load_registered_cells(path='output/df_registered_saved.pkl')
-# load prepared data for model fitting
-ella_demo.load_nhpp_prepared(path='output/df_nhpp_prepared_saved.pkl')
-# load model fitting results
-ella_demo.load_nhpp_fit_results(path='output/nhpp_fit_results_saved.pkl')
+# load a previously saved fit
+ella_demo.load_nhpp_fit_results(res_path='output/nhpp_fit_results.pkl')
 ```
 3. Let's then run the testing and estimation:
 ```python
@@ -76,11 +74,11 @@ ella_demo.pattern_labeling(K=5)
 ```
 Prints:
 ```bash
-Pattern 1: 6 genes
+Pattern 1: 5 genes
 Pattern 2: 14 genes
-Pattern 3: 9 genes
-Pattern 4: 10 genes
-Pattern 5: 9 genes
+Pattern 3: 11 genes
+Pattern 4: 9 genes
+Pattern 5: 6 genes
 ```
 
 Plots: numbers and proportions of significant genes, estimated expression patterns, and estimated pattern scores

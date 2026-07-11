@@ -3,6 +3,7 @@ title: Home
 layout: home
 parent: ELLA-Cox
 nav_order: 1
+grand_parent: Archived
 ---
 <div style="margin: 0 auto; text-align: center;"> 
   <img src="{{ site.baseurl }}/ella_cox/images/home_logo.png" width="200" />

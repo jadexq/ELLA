@@ -3,6 +3,7 @@ title: ELLA's Inputs
 layout: default
 parent: ELLA v1
 nav_order: 5
+grand_parent: Archived
 ---
 ## Inputs
 

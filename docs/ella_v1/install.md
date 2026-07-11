@@ -3,6 +3,7 @@ title: Install ELLA
 layout: default
 parent: ELLA v1
 nav_order: 2
+grand_parent: Archived
 ---
 ## Installation
 

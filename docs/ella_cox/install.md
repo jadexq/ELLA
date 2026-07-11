@@ -3,6 +3,7 @@ title: Install ELLA
 layout: default
 parent: ELLA-Cox
 nav_order: 2
+grand_parent: Archived
 ---
 ## Installation
 

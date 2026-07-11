@@ -1,9 +1,7 @@
 ---
 title: MERFISH
 layout: default
-parent: Reproducibility
-grand_parent: ELLA-Cox
-nav_order: 4
+nav_exclude: true
 ---
 ### MERFISH Adult Mouse Brain Data Application
 

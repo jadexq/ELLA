@@ -3,9 +3,9 @@ title: Reproducibility
 layout: default
 parent: ELLA v1
 nav_order: 7
-has_children: true
 permalink: /ella_v1/reproduce/
 has_toc: false
+grand_parent: Archived
 ---
 ## Reproducibility
 

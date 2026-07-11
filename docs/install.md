@@ -11,31 +11,27 @@ nav_order: 2
 <br>
 <br>
 
-Create a conda envirnment for ELLA:
+Requires Python ≥ 3.9. All dependencies are declared in `pyproject.toml` and installed automatically.
+
+We recommend creating a conda environment for ELLA:
 
 ```
-conda create -n ELLA python=3.10
+conda create -n ELLA "python>=3.9"
 conda activate ELLA
 ```
-Install R:
-```
-conda install conda-forge::r-base
-```
-(Alternative ways of installing R can be found on the [R website](https://www.r-project.org).)
 
+**Option 1: install directly from GitHub**
 
-Get ELLA from github:
+```
+pip install "git+https://github.com/jadexq/ELLA.git"
+```
+
+**Option 2: install from a local clone** (use `-e` for an editable/development install)
 
 ```
 git clone https://github.com/jadexq/ELLA.git
-```
-
-Go to the folder `ELLA` and install:
-
-```
-cd ./ELLA
-pip install -r requirements.txt
-pip install -e .
+cd ELLA
+pip install -e .        # or: pip install .
 ```
 
 Congrats, you've got ELLA installed! (The installation should take less than 5min.) You can get ELLA tested using [A Minimum Demo]({{ site.baseurl }}/mini_demo.html).

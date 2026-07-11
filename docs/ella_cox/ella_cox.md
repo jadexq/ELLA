@@ -1,9 +1,10 @@
 ---
 title: ELLA-Cox
 layout: default
-nav_order: 8
+nav_order: 2
 has_children: true
 has_toc: false
+parent: Archived
 ---
 ## ELLA-Cox (archived)
 

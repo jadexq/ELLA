@@ -1,9 +1,7 @@
 ---
 title: Seq-Scope
 layout: default
-parent: Reproducibility
-grand_parent: ELLA-Cox
-nav_order: 1
+nav_exclude: true
 ---
 ### Seq-Scope Mouse Liver Data Application
 

@@ -3,6 +3,7 @@ title: A Complete Demo
 layout: default
 parent: ELLA-Cox
 nav_order: 4
+grand_parent: Archived
 ---
 ## A Complete Demo
 

@@ -3,9 +3,9 @@ title: Reproducibility
 layout: default
 parent: ELLA-Cox
 nav_order: 6
-has_children: true
 permalink: /ella_cox/reproduce/
 has_toc: false
+grand_parent: Archived
 ---
 ## Reproducibility
 

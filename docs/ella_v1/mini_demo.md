@@ -3,6 +3,7 @@ title: A Minimum Demo
 layout: default
 parent: ELLA v1
 nav_order: 3
+grand_parent: Archived
 ---
 ## A Minimum Demo
 

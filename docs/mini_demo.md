@@ -29,18 +29,16 @@ ELLA/tutorials/mini_demo/
 ```
 The input data (`input/mini_demo_data.pkl`) mainly contains a dictionary of three dataframes corresponding to gene expression, cell segmentation, and nucleus segmentation (optional). The data contains 5 cells and 4 genes, and its details are explained in [ELLA's Inputs]({{ site.baseurl }}/inputs.html).
 
-The script of this demo is `mini_demo.ipynb`, you should be able to run it locally by yourself (run time around 2min) and you would expected the following steps and outputs:
+The script of this demo is `mini_demo.ipynb`, you should be able to run it locally by yourself (run time around 2min) and you would expect the following steps and outputs.
 
-3. ### ELLA Anlysis <br>
+The alternative NHPP fit uses a bounded-Newton solver (deterministic, finds the global optimum); there are no `adam_*` or `max_iter` arguments. The two Newton knobs are `newton_max_iter` (default 100) and `newton_ftol` (default 1e-12), rarely changed.
+
+### ELLA Analysis <br>
 Data pre-processing
 ```python
 # import ELLA
-from ELLA.ELLA import model_beta, model_null, loss_ll, ELLA
-ella_demo = ELLA(
-    dataset='demo1', 
-    adam_learning_rate_min=1e-2, 
-    max_iter=1000
-)
+from ELLA.ELLA import ELLA
+ella_demo = ELLA(dataset='demo1')
 # load data
 ella_demo.load_data(data_path='input/mini_demo_data.pkl')
 # register cells
@@ -60,7 +58,7 @@ ella_demo.weighted_density_est()
 # likelihood ratio test
 ella_demo.compute_pv()
 ```
-4. ### Check out ELLA's results <br>
+### Check out ELLA's results <br>
 ```python
 import numpy as np
 import pandas as pd
@@ -82,7 +80,7 @@ pv = ella_demo.pv_fdr_tl['fibroblast']
 # estimated expression intensities
 lam = ella_demo.weighted_lam_est['fibroblast']
 # demo data
-demo_data = pd.read_pickle('input/demo_data.pkl')
+demo_data = pd.read_pickle('input/mini_demo_data.pkl')
 # cell segmentations
 cell_seg = demo_data['cell_seg']
 # nucleus segmentations
@@ -120,7 +118,7 @@ for i, g in enumerate(genes):
 <div style="margin: 0 auto; text-align: center;"> 
   <img src="{{ site.baseurl }}/images/demo_lam_est.png" width="600" />
 </div>	
-Here *Slc38a2* looks like a nuclear localized genes as its estimated expression intensity is high when the relative position is near zero (corresponding to nuclear center); *Col1a1* could be a nuclear edge localized gene as its expression intensity peaks around relative position 0.3; *Actn1* should be a cytoplasmic localized gene as its expression intensity peak around 0.6; and *Cyb5r3* should be a cell membrane localized gene as its expression intensity peaks near 1 (corresponding to the cell membrane). 
+Here *Slc38a2* looks like a nuclear localized gene as its estimated expression intensity is high when the relative position is near zero (corresponding to nuclear center); *Col1a1* could be a nuclear edge localized gene as its expression intensity peaks around relative position 0.3; *Actn1* should be a cytoplasmic localized gene as its expression intensity peaks around 0.6; and *Cyb5r3* should be a cell membrane localized gene as its expression intensity peaks near 1 (corresponding to the cell membrane). 
 
 More to plot:
 We can further plot the cells and genes to have a more intuitive sense of the localization patterns.
@@ -128,18 +126,41 @@ We can further plot the cells and genes to have a more intuitive sense of the lo
 alphas = [0.6, 0.3, 0.5, 0.5]
 
 nr = len(genes)
-nc = len(cells)
+nc = len(cells)+1
 ss_nr = 2
 ss_nc = 2
 fig = plt.figure(figsize=(nc*ss_nc, nr*ss_nr), dpi=300)
 gs = fig.add_gridspec(nr, nc,
                       width_ratios=[1]*nc,
                       height_ratios=[1]*nr)
-gs.update(wspace=0.0, hspace=0.0)
+gs.update(wspace=0.1, hspace=0.1)
 
+# plot estimated expression intensities 
+for j, g in enumerate(genes):
+    ax = plt.subplot(gs[j,0])
+    pv_g = pv[j]
+    lam_g = lam[j]
+    lam_g_std = (lam_g-np.min(lam_g))/(np.max(lam_g)-np.min(lam_g))
+    ax.plot(np.linspace(0,1,len(lam_g_std)), lam_g_std, lw=2, color=colors[j])
+    ax.set_xlim((-0.2, 1.2))
+    ax.set_ylim((-0.2, 1.2))
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlabel('')
+    ax.text(0.5, 1.1, g, ha='center', va='center')
+    if pv_g < 1e-3:
+        ax.set_ylabel('p<1e-3')
+    else:
+        ax.set_ylabel(f'p={pv_g:.3f}')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+
+# plot cells and genes
 for i, c in enumerate(cells):
     for j, g in enumerate(genes):
-        ax = plt.subplot(gs[j,i])
+        ax = plt.subplot(gs[j,i+1])
 
         cell_seg_c = cell_seg[cell_seg.cell==c]
         nucleus_seg_c = nucleus_seg[nucleus_seg.cell==c]

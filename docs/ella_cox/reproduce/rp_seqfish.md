@@ -1,9 +1,7 @@
 ---
 title: SeqFISH+
 layout: default
-parent: Reproducibility
-grand_parent: ELLA-Cox
-nav_order: 3
+nav_exclude: true
 ---
 ### SeqFISH+ Mouse Embryonic Fibroblast Data Application
 
