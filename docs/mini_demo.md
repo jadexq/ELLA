@@ -1,7 +1,8 @@
 ---
 title: A Minimum Demo
 layout: default
-nav_order: 3
+parent: Demos
+nav_order: 1
 ---
 
 ## A Minimum Demo

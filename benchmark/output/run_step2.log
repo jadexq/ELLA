@@ -1,0 +1,24 @@
+=== cyto_symmetric / newton ===
+  v1 pickle: 57693 transcripts, 116 cells, 100 genes; polygons (median 25 verts/cell) -> ella1_input.pkl
+  [newton] register+prepare 100 genes once ...
+  [newton] fitting 100 genes across 32 shards (n_jobs=32) ...
+  [newton] done: 100/100 genes, wall=11.45s, peak_mem=10.934GB, node=arseven
+  power(newton) = 97/100 = 0.970
+=== cyto_symmetric / adam ===
+  v1 pickle: 57693 transcripts, 116 cells, 100 genes; polygons (median 25 verts/cell) -> ella1_input.pkl
+  [adam] register+prepare 100 genes once ...
+  [adam] fitting 100 genes across 32 shards (n_jobs=32) ...
+  [adam] done: 100/100 genes, wall=149.02s, peak_mem=11.334GB, node=arseven
+  power(adam) = 91/100 = 0.910
+
+=== POWER ===
+method  n_genes  n_sig  power
+newton      100     97   0.97
+  adam      100     91   0.91
+
+=== KLD (median per method) ===
+method
+adam      0.0095
+newton    0.0026
+  wrote /home/jadewang/ella2d_v4/competing_methods/ELLA1/benchmark/output/cyto_kld.png
+cyto_symmetric done.

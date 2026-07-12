@@ -1,7 +1,8 @@
 ---
 title: A Complete Demo
 layout: default
-nav_order: 4
+parent: Demos
+nav_order: 2
 ---
 
 ## A Complete Demo

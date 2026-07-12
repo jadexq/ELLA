@@ -1,0 +1,5 @@
+experiment,method,cores,wall_s,peak_mem_gb,n_genes,n_cells,node
+null2,newton,32,28.21,11.867,100,116,arseven
+null2,adam,32,171.55,12.527,100,116,arseven
+cyto_symmetric,newton,32,11.45,10.934,100,116,arseven
+cyto_symmetric,adam,32,149.02,11.334,100,116,arseven

@@ -1,0 +1,17 @@
+=== null2 / newton ===
+  v1 pickle: 581154 transcripts, 116 cells, 1000 genes; polygons (median 25 verts/cell) -> ella1_input.pkl
+  [newton] register+prepare 1000 genes once ...
+  [newton] fitting 100 genes across 32 shards (n_jobs=32) ...
+  [newton] done: 100/100 genes, wall=28.21s, peak_mem=11.867GB, node=arseven
+=== null2 / adam ===
+  v1 pickle: 581154 transcripts, 116 cells, 1000 genes; polygons (median 25 verts/cell) -> ella1_input.pkl
+  [adam] register+prepare 1000 genes once ...
+  [adam] fitting 100 genes across 32 shards (n_jobs=32) ...
+  [adam] done: 100/100 genes, wall=171.55s, peak_mem=12.527GB, node=arseven
+    experiment method  cores  wall_s  peak_mem_gb  n_genes  n_cells    node
+cyto_symmetric newton     32    7.32       10.762      100      116 arseven
+cyto_symmetric   adam     32  150.73       11.529      100      116 arseven
+         null2 newton     32   28.21       11.867      100      116 arseven
+         null2   adam     32  171.55       12.527      100      116 arseven
+  wrote /home/jadewang/ella2d_v4/competing_methods/ELLA1/benchmark/output/null2_qq.png
+null2 done.

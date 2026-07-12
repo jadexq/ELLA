@@ -38,18 +38,21 @@ Results are stored on the object (`ella.pv_fdr_tl`, `ella.weighted_lam_est`, `el
 
 ### The large-panel way
 
-ELLA fits each gene independently and has no built-in parallelism, so a large panel (thousands of genes over hundreds of cells) run serially can take hours. Four adjustments make it tractable. They all rest on one structural fact: **registration and data preparation depend only on the cells, while the expensive `nhpp_fit` is per gene and embarrassingly parallel across genes.**
+ELLA fits each gene independently and has no built-in parallelism, so a large panel (thousands of genes over hundreds of cells) run serially can take hours. Parallelizing rests on two facts:
 
-**1. Register and prepare once, then reuse.** `register_cells` and `nhpp_prepare` do not depend on any individual gene, so run them a single time and reload the saved results instead of recomputing them:
+- **Registration and data preparation depend only on the cells**, not on any individual gene, so `register_cells` + `nhpp_prepare` are run **once**.
+- **The fit is per gene and deterministic** (the bounded-Newton solver has a unique global optimum, and a gene's result depends only on its own prepared data). So the gene set can be split into batches that fit independently and give **identical** results regardless of how they were batched.
+
+The pattern: prepare once, save, then hand each worker only its batch of the prepared data. `subset_prepared(prepared, genes)` slices a prepared-data dict down to a gene subset, and `load_nhpp_prepared(prepared_dict=...)` loads that subset directly.
+
+**1. Prepare once and save.**
 
 ```python
-ella.load_registered_cells(registered_path='output/df_registered.pkl')
-ella.load_nhpp_prepared(prepared_path='output/df_nhpp_prepared.pkl')
+ella.register_cells()   # writes output/df_registered.pkl
+ella.nhpp_prepare()     # writes output/df_nhpp_prepared.pkl
 ```
 
-This removes the redundant re-registration of all cells that would otherwise happen in every parallel worker.
-
-**2. Parallelize over genes.** Split the gene set into batches and fit each batch in its own process, then concatenate the per-gene results. Pin BLAS to a single thread per worker (before importing numpy/ELLA), so that many worker processes do not each spawn a BLAS thread pool and oversubscribe the cores:
+**2. Fit gene batches in parallel — give each worker only its batch.** Pin BLAS to one thread per worker (before importing numpy/ELLA), so many workers do not each spawn a thread pool and oversubscribe the cores.
 
 ```python
 import os
@@ -57,27 +60,40 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
+import pandas as pd
 from concurrent.futures import ProcessPoolExecutor
+from ELLA import ELLA, subset_prepared
 
-def fit_gene_batch(gene_names):
-    from ELLA.ELLA import ELLA
+full = pd.read_pickle('output/df_nhpp_prepared.pkl')     # load ONCE, in the parent
+genes = full['gene_list_dict']['my_cell_type']
+batches = [genes[i::n_jobs] for i in range(n_jobs)]      # or contiguous ranges
+
+def fit_batch(sub):                                      # sub = this batch's prepared data
     ella = ELLA(dataset='my_run')
-    ella.load_data(data_path='input/my_data.pkl')
-    # reuse the one-time registration / preparation
-    ella.load_registered_cells(registered_path='output/df_registered.pkl')
-    ella.load_nhpp_prepared(prepared_path='output/df_nhpp_prepared.pkl')
-    # restrict this worker to `gene_names`, then run
-    #   nhpp_fit -> weighted_density_est -> compute_pv
-    # and return each gene's raw (pre-FDR) p-value.
-    ...
+    ella.load_nhpp_prepared(prepared_dict=sub)
+    ella.nhpp_fit(); ella.weighted_density_est(); ella.compute_pv()
+    t = ella.type_list[0]
+    return list(zip(ella.gene_list_dict[t], ella.pv_cauchy_tl[t]))   # raw (pre-FDR) p
 
-batches = [genes[i::n_jobs] for i in range(n_jobs)]   # or contiguous ranges
 with ProcessPoolExecutor(max_workers=n_jobs) as ex:
-    results = list(ex.map(fit_gene_batch, batches))
+    results = list(ex.map(fit_batch, (subset_prepared(full, b) for b in batches)))
 ```
 
-**3. Match the workers to the machine.** Run on a compute node, not a login node. Set `n_jobs` close to the number of available cores; going above the number of genes just leaves workers idle.
+Slicing in the parent and passing only the subset means each gene's prepared data is sent to exactly one worker — peak memory scales with the batch size, not `panel × workers`, and no worker reloads the full panel.
 
-**4. Apply the FDR correction once, at the end.** Have the workers return the raw (pre-adjustment) per-gene p-values, collect them from all batches into one array, and apply the multiple-testing correction across the full gene set (not per batch).
+**3. Or, for a job array / independent tasks**, pre-split the prepared data into per-shard files (there is no shared parent to slice), and have each task load only its file:
 
-Note: ELLA has no dedicated sharding API, and its internal gene-offset path can mis-index the output arrays. The reliable pattern is to have each worker fit its assigned genes explicitly, one gene at a time, and collect the p-values.
+```python
+# split step (run once)
+full = pd.read_pickle('output/df_nhpp_prepared.pkl')
+for i, b in enumerate(batches):
+    pd.to_pickle(subset_prepared(full, b), f'output/prepared_{i:03d}.pkl')
+
+# each array task
+ella.load_nhpp_prepared(prepared_path=f'output/prepared_{task_id:03d}.pkl')
+ella.nhpp_fit(); ella.weighted_density_est(); ella.compute_pv()
+```
+
+**4. Match the workers to the machine.** Run on a compute node, not a login node. Set `n_jobs` near the number of available cores; going above the number of genes just leaves workers idle.
+
+**5. Apply the FDR correction once, at the end.** Collect the raw per-gene p-values from all batches into one array and apply the multiple-testing correction across the full gene set (not per batch).
