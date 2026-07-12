@@ -11,3 +11,7 @@ vendor/
 __pycache__
 .ipynb_checkpoints/
 *.egg-info
+
+# generated benchmark figure (tracked copy lives in docs/images/)
+benchmark/figures/benchmark_summary.png
+benchmark/figures/benchmark_summary.pdf
