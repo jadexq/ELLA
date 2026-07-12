@@ -148,6 +148,51 @@ def polygon_boundary_radius(poly_x, poly_y, cx, cy, angles):
     return R
 
 
+def subset_prepared(prepared, genes):
+    '''Return a copy of a prepared-data dict (as produced by `nhpp_prepare` and
+    consumed by `load_nhpp_prepared`) restricted to `genes`.
+
+    The alternative fit is per-gene and, with the bounded-Newton solver,
+    deterministic -- a gene's result depends only on its own prepared data. So a
+    large panel can be split into gene batches that fit independently and give
+    identical results regardless of batching. Slice once, hand each worker only
+    its batch, and reload with `load_nhpp_prepared(prepared_dict=subset)`:
+
+        full = pd.read_pickle('output/df_nhpp_prepared.pkl')
+        sub  = subset_prepared(full, my_gene_batch)
+        ella.load_nhpp_prepared(prepared_dict=sub)
+        ella.nhpp_fit(); ella.weighted_density_est(); ella.compute_pv()
+
+    Args:
+        prepared: prepared-data dict with keys type_list, gene_list_dict,
+            cell_list_dict, cell_list_all, and the per-gene lists r_tl, c0_tl,
+            c0_tl_homo, n_tl, n_tl_homo (each a dict cell_type -> list-by-gene).
+        genes: iterable of gene names to keep. Genes absent from a type are
+            skipped; original per-type gene order is preserved.
+    Returns:
+        A new prepared-data dict (shallow-copied containers) holding only `genes`.
+        type_list / cell_list_dict / cell_list_all pass through unchanged.
+    '''
+    keep = set(genes)
+    per_gene_keys = ('r_tl', 'c0_tl', 'c0_tl_homo', 'n_tl', 'n_tl_homo')
+    out = {
+        'type_list': list(prepared['type_list']),
+        'cell_list_dict': prepared['cell_list_dict'],
+        'cell_list_all': prepared['cell_list_all'],
+        'gene_list_dict': {},
+    }
+    for k in per_gene_keys:
+        out[k] = {}
+    for t in prepared['type_list']:
+        gl = list(prepared['gene_list_dict'][t])
+        idx = [i for i, g in enumerate(gl) if g in keep]
+        out['gene_list_dict'][t] = [gl[i] for i in idx]
+        for k in per_gene_keys:
+            col = prepared[k][t]
+            out[k][t] = [col[i] for i in idx]
+    return out
+
+
 class ELLA:
     '''
     Class of ELLA
@@ -537,16 +582,16 @@ class ELLA:
         if prepared_dict==None and prepared_path!=None:
             prepared_dict = pd.read_pickle(prepared_path)
                 
-        self.r_tl = data_dict['r_tl']
-        self.c0_tl = data_dict['c0_tl']
-        self.c0_tl_homo = data_dict['c0_tl_homo']
-        self.n_tl = data_dict['n_tl']
-        self.n_tl_homo = data_dict['n_tl_homo']
+        self.r_tl = prepared_dict['r_tl']
+        self.c0_tl = prepared_dict['c0_tl']
+        self.c0_tl_homo = prepared_dict['c0_tl_homo']
+        self.n_tl = prepared_dict['n_tl']
+        self.n_tl_homo = prepared_dict['n_tl_homo']
 
-        self.type_list = data_dict['type_list'] # cell type list
-        self.gene_list_dict = data_dict['gene_list_dict'] # gene lists for each type
-        self.cell_list_dict = data_dict['cell_list_dict'] # cell list
-        self.cell_list_all = data_dict['cell_list_all'] # list of all cells
+        self.type_list = prepared_dict['type_list'] # cell type list
+        self.gene_list_dict = prepared_dict['gene_list_dict'] # gene lists for each type
+        self.cell_list_dict = prepared_dict['cell_list_dict'] # cell list
+        self.cell_list_all = prepared_dict['cell_list_all'] # list of all cells
 
         # update global constants
         self.nt = len(self.type_list) # number of cell types
